@@ -20,6 +20,6 @@ COPY ./apps/backend ./
 RUN npm run build
 
 # Expose the port the app runs on
-EXPOSE 3001
+EXPOSE 4001
 
 CMD ["npm", "run", "dev"]

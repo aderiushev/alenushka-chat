@@ -20,7 +20,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       existingSocket.disconnect();
     }
 
-    const socket = io('http://localhost:3001', {
+    const socket = io('http://localhost:4001', {
       extraHeaders: {
         Authorization: token ? `Bearer ${token}` : '',
       },

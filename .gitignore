@@ -1,5 +1,5 @@
-./apps/backend/src/alenushka-chat-eaa6a-firebase-adminsdk-fbsvc-a8ea290eb0.json
-./.idea
+apps/backend/src/alenushka-chat-eaa6a-firebase-adminsdk-fbsvc-a8ea290eb0.json
+.idea
 .DS_Store
 .env
 dist

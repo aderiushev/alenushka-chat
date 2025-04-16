@@ -11,5 +11,5 @@ RUN npm install rollup
 
 COPY apps/frontend ./
 
-EXPOSE 3000
+EXPOSE 4000
 CMD ["npm", "run", "dev"]
