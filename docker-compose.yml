@@ -20,7 +20,7 @@ services:
     volumes:
       - ./apps/backend:/app
     ports:
-      - "3001:3001"
+      - "4001:4001"
     env_file:
       - .env
     depends_on:
@@ -34,7 +34,7 @@ services:
       - ./apps/frontend:/app
       - /app/node_modules
     ports:
-      - "3000:3000"
+      - "4000:4000"
     depends_on:
       - backend
 
