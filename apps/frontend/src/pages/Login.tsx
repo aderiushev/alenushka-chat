@@ -20,7 +20,7 @@ export default function Login() {
   return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <div className="flex items-center justify-center flex-1">
+        <div className="flex sm:items-center justify-center flex-1">
           <Form onSubmit={handleLogin} className="bg-white p-6 rounded shadow-md w-full max-w-sm">
             <h2 className="text-2xl mb-4 font-semibold">Вход</h2>
             <Input
