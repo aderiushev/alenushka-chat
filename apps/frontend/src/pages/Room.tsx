@@ -6,13 +6,14 @@ import {useUser} from "../hooks/useUser";
 import {useRoom} from "../hooks/useRoom";
 import {Textarea} from "@heroui/input";
 import {Button} from "@heroui/react";
+// @ts-ignore
 import messageSound from '../../public/sounds/new-message.mp3';
 
 export default function Room() {
   const { id } = useParams();
   const connect = useSocketStore((s) => s.connect);
   const messages = useSocketStore((s) => s.messages);
-  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<(string | number)[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [isTabFocused, setIsTabFocused] = useState(true);
   const originalTitle = useRef(document.title);
@@ -76,7 +77,7 @@ export default function Room() {
   const handleSend = () => {
     if (!text.trim() || !id) return;
 
-    sendMessage({ roomId: id, userId: user.user ? Number(user.user.sub) : null, type: 'TEXT', content: text });
+    sendMessage({ roomId: id, userId: user.user ? Number(user.user.sub) : undefined, type: 'TEXT', content: text });
     setText('');
   };
 
@@ -91,7 +92,7 @@ export default function Room() {
     const url = res.data.url;
 
     const type = file.type.startsWith('image/') ? 'IMAGE' : 'FILE';
-    sendMessage({ roomId: id,userId: Number(user.user.sub), type, content: url });
+    sendMessage({ roomId: id, userId: user.user ? Number(user.user.sub) : undefined, type, content: url });
   };
 
   const handleTyping = () => {
@@ -159,7 +160,8 @@ export default function Room() {
 
   if (!room) return null
 
-  const isPatientConnected = onlineUsers.includes(socket.id) || (onlineUsers.length > 1 && onlineUsers.includes(room.user.id));
+  const isPatientConnected = ((typeof socket?.id === 'string' || typeof socket?.id === 'number') && onlineUsers.includes(socket.id))
+      || (onlineUsers.length > 1 && onlineUsers.includes(room.user.id));
 
   return (
       <div className="flex flex-col h-screen">

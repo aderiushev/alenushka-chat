@@ -16,10 +16,7 @@ RUN npm install
 # Copy the rest of the backend application code
 COPY ./apps/backend ./
 
-# Build the application using NestJS
-RUN npm run build
-
 # Expose the port the app runs on
 EXPOSE 4001
 
-CMD ["node", "./dist/main.js"]
+CMD ["npm", "run", "dev"]

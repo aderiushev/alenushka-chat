@@ -11,9 +11,5 @@ RUN npm install rollup
 
 COPY apps/frontend ./
 
-RUN npm install -g serve
-
 EXPOSE 4000
-
-# Serve the static files from dist
-CMD ["serve", "-s", "dist", "-l", "4000"]
+CMD ["npm", "run", "dev"]

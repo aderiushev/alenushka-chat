@@ -4,7 +4,6 @@ import { api } from '../api';
 import {Button, Form} from "@heroui/react"; // Ensure the correct API call for room creation
 
 export default function CreateRoom() {
-  const [roomName, setRoomName] = useState('');
   const [patientName, setPatientName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +40,7 @@ export default function CreateRoom() {
 
     setLoading(true);
     try {
-      await api.post('/rooms', { name: roomName, userId: Number(selectedUserId), patientName });
+      await api.post('/rooms', { userId: Number(selectedUserId), patientName });
 
       // After successful room creation, navigate back to rooms list
       navigate('/rooms');

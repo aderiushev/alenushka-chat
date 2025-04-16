@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import { api } from "../api";
-import { useUser } from "../hooks/useUser";
 import {Button} from "@heroui/react";
 
 interface Room {

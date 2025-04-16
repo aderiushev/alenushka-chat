@@ -1,5 +1,5 @@
-import {Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Button, Image} from "@heroui/react";
-import {useUser} from "@/hooks/useUser.ts";
+import { Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Button } from "@heroui/react";
+import { useUser } from "@/hooks/useUser.ts";
 
 const Header = ()=>  {
   const { user } = useUser();
@@ -7,6 +7,7 @@ const Header = ()=>  {
   return (
       <Navbar
           className="p-2"
+          // @ts-ignore
           style={{ '--navbar-height': 'auto' }}
           classNames={{ wrapper: "flex flex-col sm:flex-row" }}
       >
