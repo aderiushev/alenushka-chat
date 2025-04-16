@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "strict": false,
+    "module": "commonjs",
+    "target": "es2018",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}

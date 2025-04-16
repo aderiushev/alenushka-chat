@@ -1,0 +1,45 @@
+generator client {
+  provider      = "prisma-client-js"
+binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id           String    @id @default(uuid())
+  createdAt    DateTime  @default(now())
+  userId       Int?      // Optional reference to the User model
+  user         User?     @relation("UserRooms", fields: [userId], references: [id], onDelete: Cascade)
+  patientName  String
+  messages     Message[]
+}
+
+model Message {
+  id        String    @id @default(uuid())
+  roomId    String
+  room      Room      @relation(fields: [roomId], references: [id])
+  type      MessageType
+  content   String
+  createdAt DateTime  @default(now())
+  userId    Int?
+  user      User?     @relation("UserMessages", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id        Int      @id @default(autoincrement()) // Keep the type as Int
+  email     String   @unique
+  password  String
+  role      String
+  name      String
+  rooms     Room[]   @relation("UserRooms") // One-to-many relation with Room
+  messages  Message[] @relation("UserMessages") // One-to-many relation with Message
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+}
