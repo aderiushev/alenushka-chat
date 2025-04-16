@@ -165,8 +165,18 @@ export default function Room() {
       <div className="flex flex-col h-screen">
         <div className="p-4 border-b bg-white shadow z-10">
           <div className="flex flex-col gap-1">
-            <h1 className="text-xl font-semibold flex items-center gap-2">
-              Консультация: {room.patientName} <span className={`w-3 h-3 rounded-full ${isPatientConnected ? 'bg-green-500' : 'bg-red-500'}`} /> | {room.user.name} <span className={`w-3 h-3 rounded-full ${onlineUsers.includes(room.user.id) ? 'bg-green-500' : 'bg-red-500'}`} />
+            <h1 className="text-xl font-semibold items-center gap-2 flex justify-between flex-col sm:flex-row">
+              <span>Консультация</span>
+              <span className="flex flex-col gap-4 sm:flex-row">
+                <span className="flex items-center gap-1">
+                  <span className={`flex w-3 h-3 rounded-full ${isPatientConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <span>{room.patientName}</span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className={`flex w-3 h-3 rounded-full ${onlineUsers.includes(room.user.id) ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <span>{room.user.name}</span>
+                </span>
+              </span>
             </h1>
             {isTyping && (
               <span className="text-sm text-gray-500">Пользователь печатает...</span>
