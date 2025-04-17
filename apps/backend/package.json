@@ -6,7 +6,9 @@
     "build": "nest build",
     "dev": "nest start --watch",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "serve": "node dist/main.js",
+    "prod": "pm2 start npm --name \"pediatr-chat-api\" -- serve"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

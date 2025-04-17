@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint -c ../.eslintrc.json ./src/**/**/*.{ts,tsx} --fix",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "serve": "serve -s ./dist -l 4000",
+    "prod": "pm2 start npm --name \"pediatr-chat\" -- serve"
   },
   "dependencies": {
     "@heroui/button": "2.2.17",
