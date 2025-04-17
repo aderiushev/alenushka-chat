@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
-import {Button, Form} from "@heroui/react"; // Ensure the correct API call for room creation
+import {Button, Form, Select, SelectItem} from "@heroui/react";
+import {Input} from "@heroui/input";
+import Header from "@/components/Header.tsx"; // Ensure the correct API call for room creation
 
 export default function CreateRoom() {
   const [patientName, setPatientName] = useState('');
@@ -29,12 +31,12 @@ export default function CreateRoom() {
     e.preventDefault();
 
     if (!selectedUserId) {
-      setError('Please select a user');
+      setError('Пожалуйста, выберите пользователя');
       return;
     }
 
     if (!patientName) {
-      setError('Please select a patient name');
+      setError('Пожалуйста, укажите имя клиента');
       return;
     }
 
@@ -52,55 +54,42 @@ export default function CreateRoom() {
   };
 
   return (
-      <div className="max-w-md mx-auto p-6 bg-white shadow-lg rounded-lg">
-        <h1 className="text-2xl font-semibold text-center mb-6">Create Room</h1>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex sm:items-center justify-center flex-1">
+          <Form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-full max-w-sm">
+            <h2 className="text-2xl mb-4 font-semibold">Создать консультацию</h2>
+              <Select
+                  placeholder="Выберите врача"
+                  items={users}
+                  value={selectedUserId || ''}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  required
+              >
+                {(user) => <SelectItem>{user.name}</SelectItem>}
+              </Select>
 
-        {error && <div className="text-red-500 text-center mb-4">{error}</div>}
+              <Input
+                  label="Имя клиента"
+                  type="text"
+                  id="patientName"
+                  value={patientName}
+                  onChange={(e) => setPatientName(e.target.value)}
+                  placeholder="Введите имя"
+                  required
+              />
 
-        <Form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="userSelect" className="block text-gray-700 mb-2">
-              Select User
-            </label>
-            <select
-                id="userSelect"
-                value={selectedUserId || ''}
-                onChange={(e) => setSelectedUserId(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
+            {error && <div className="text-red-500 text-center mb-4">{error}</div>}
+
+            <Button
+                type="submit"
+                color="primary"
+                disabled={loading}
             >
-              <option value="" disabled>Select a user</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="mb-4">
-            <label htmlFor="roomName" className="block text-gray-700 mb-2">
-              Patient name
-            </label>
-            <input
-                type="text"
-                id="patientName"
-                value={patientName}
-                onChange={(e) => setPatientName(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter Patient name"
-                required
-            />
-          </div>
-
-          <Button
-              type="submit"
-              color="primary"
-              disabled={loading}
-          >
-            {loading ? 'Creating...' : 'Create Room'}
-          </Button>
-        </Form>
+              {loading ? 'Создание...' : 'Создать'}
+            </Button>
+          </Form>
+        </div>
       </div>
   );
 }

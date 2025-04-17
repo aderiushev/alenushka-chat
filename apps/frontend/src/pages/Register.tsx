@@ -15,7 +15,7 @@ export default function Register() {
     e.preventDefault();
     const res = await api.post('/auth/register', { email, password, name });
     localStorage.setItem('token', res.data.token);
-    navigate('/login');
+    navigate('/rooms');
   };
 
   return (

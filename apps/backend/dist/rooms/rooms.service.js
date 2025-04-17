@@ -21,7 +21,7 @@ let RoomsService = class RoomsService {
     }
     findAll() {
         return this.prisma.room.findMany({
-            include: { messages: { orderBy: { createdAt: 'desc' }, take: 1 } },
+            include: { user: true, messages: { orderBy: { createdAt: 'desc' }, take: 1 } },
         });
     }
     findById(id) {

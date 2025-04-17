@@ -18,6 +18,8 @@ declare global {
     id: string;
     user: User;
     patientName: string;
+    messages: Message[];
+    createdAt: string;
   }
 }
 
