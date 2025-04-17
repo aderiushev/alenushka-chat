@@ -147,11 +147,25 @@ export default function Room() {
   }, []);
 
   useEffect(() => {
+    const audio = new Audio(messageSound);
+    audioRef.current = audio;
+
+    // Attempt to unlock audio on first user interaction
+    const unlockAudio = () => {
+      audio.play().catch(() => {}); // silently unlock
+      audio.pause();
+      audio.currentTime = 0;
+      window.removeEventListener('click', unlockAudio);
+    };
+
+    window.addEventListener('click', unlockAudio);
+
     const handleNewMessage = () => {
-      if (!audioRef.current) {
-        audioRef.current = new Audio(messageSound);
-      }
-      audioRef.current.play().catch(() => null);
+      if (!audioRef.current) return;
+
+      audioRef.current.play().catch((err) => {
+        console.warn('Sound not played:', err.message);
+      });
 
       let visible = false;
       flickerInterval.current = setInterval(() => {
@@ -163,6 +177,7 @@ export default function Room() {
     window.addEventListener('new-message-received', handleNewMessage);
     return () => {
       window.removeEventListener('new-message-received', handleNewMessage);
+      window.removeEventListener('click', unlockAudio);
     };
   }, [isTabFocused]);
 
