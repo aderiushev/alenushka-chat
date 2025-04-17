@@ -4,6 +4,7 @@ interface JwtPayload {
   sub: string;
   role: string;
   exp: number;
+  name: string;
 }
 
 export function useUser(): { user: JwtPayload | null; logout: () => void } {

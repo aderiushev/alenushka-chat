@@ -26,7 +26,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
 
   getUserIdFromSocket(client: Socket): string | null {
-    const token = client.handshake.headers.authorization?.split(' ')[1];
+    const token = client.handshake.query.token as string;
 
     if (token) {
       try {

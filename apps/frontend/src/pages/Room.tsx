@@ -207,7 +207,7 @@ export default function Room() {
                 </span>
                 <span className="flex items-center gap-1">
                   <span className={`flex w-3 h-3 rounded-full ${onlineUsers.includes(room.user.id) ? 'bg-green-500' : 'bg-red-500'}`} />
-                  <span>{room.user.name}</span>
+                  <span>Вы ({room.user.name})</span>
                 </span>
               </span>
             </h1>
