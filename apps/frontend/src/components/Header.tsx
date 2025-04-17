@@ -23,7 +23,7 @@ const Header = ()=>  {
         <NavbarBrand>
           <Link href="/">Алёнушка :: Онлайн-консультации</Link>
         </NavbarBrand>
-        {user && user.role === 'admin' && (
+        {user && (
           <NavbarContent className="sm:flex gap-4" justify="center">
             <NavbarItem>
               <Link color="success" href="/rooms">
@@ -36,11 +36,13 @@ const Header = ()=>  {
               </Link>
             </NavbarItem>
 
-            <NavbarItem>
-              <Button onPress={onLogout}>
-                Выход
-              </Button>
-            </NavbarItem>
+            {user.role === 'admin' && (
+              <NavbarItem>
+                <Button onPress={onLogout}>
+                  Выход
+                </Button>
+              </NavbarItem>
+            )}
           </NavbarContent>
         )}
 

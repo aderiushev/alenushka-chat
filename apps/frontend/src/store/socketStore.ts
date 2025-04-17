@@ -20,11 +20,11 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       existingSocket.disconnect();
     }
 
-    const socket = io(process.env.NODE_ENV === 'development' ? 'http://localhost:4001' : `${window.location.protocol}//${window.location.hostname}/api`, {
+    const socket = io(process.env.NODE_ENV === 'development' ? 'http://localhost:4001' : `${window.location.protocol}//${window.location.hostname}`, {
       extraHeaders: {
         Authorization: token ? `Bearer ${token}` : '',
       },
-      path: '/socket.io',
+      path: '/api/socket.io',
       transports: ['websocket'],
     });
 
