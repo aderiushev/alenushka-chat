@@ -21,6 +21,9 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     }
 
     const socket = io(process.env.NODE_ENV === 'development' ? 'http://localhost:4001' : `${window.location.origin}`, {
+      extraHeaders: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
       path: '/api/socket.io',
       transports: ['websocket'],
       query: {
