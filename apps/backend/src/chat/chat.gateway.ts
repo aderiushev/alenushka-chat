@@ -14,7 +14,7 @@ import {
 } from '@nestjs/websockets';
 import { JwtService } from '../auth/jwt.service';
 
-@WebSocketGateway({ cors: true, namespace: '/' })
+@WebSocketGateway({ cors: true, namespace: '/', path: '/api/socket.io' })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
