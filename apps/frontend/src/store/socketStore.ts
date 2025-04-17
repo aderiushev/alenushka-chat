@@ -20,11 +20,10 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       existingSocket.disconnect();
     }
 
-    const socket = io(process.env.NODE_ENV === 'development' ? 'http://localhost:4001' : `${window.location.origin}`, {
+    const socket = io(process.env.NODE_ENV === 'development' ? 'http://localhost:4001' : `${window.location.origin}/api`, {
       extraHeaders: {
         Authorization: token ? `Bearer ${token}` : '',
-      },
-      path: '/api/socket.io',
+      }
     });
 
     socket.on('initial-messages', (initialMessages: Message[]) => {
