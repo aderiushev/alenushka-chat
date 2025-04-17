@@ -16,6 +16,8 @@ exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
 const auth_service_1 = require("./auth.service");
 const prisma_service_1 = require("../prisma/prisma.service");
+const roles_decorator_1 = require("./roles.decorator");
+const roles_guard_1 = require("./roles.guard");
 let AuthController = class AuthController {
     constructor(authService, prisma) {
         this.authService = authService;
@@ -27,7 +29,6 @@ let AuthController = class AuthController {
     async login(body) {
         return this.authService.login(body.email, body.password);
     }
-    // New GET endpoint to fetch the list of users
     async getUsers() {
         return this.prisma.user.findMany({
             select: {
@@ -53,6 +54,8 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.Get)('users'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),

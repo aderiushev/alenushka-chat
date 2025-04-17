@@ -5,9 +5,10 @@ import { api } from '../api';
 import {useUser} from "../hooks/useUser";
 import {useRoom} from "../hooks/useRoom";
 import {Textarea} from "@heroui/input";
-import {Button} from "@heroui/react";
+import {Button, Link} from "@heroui/react";
 // @ts-ignore
 import messageSound from '../../public/sounds/new-message.mp3';
+import {JwtPayload} from "jwt-decode";
 
 export default function Room() {
   const { id } = useParams();
@@ -139,6 +140,13 @@ export default function Room() {
   }, []);
 
   useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  useEffect(() => {
     const handleNewMessage = () => {
       if (!audioRef.current) {
         audioRef.current = new Audio(messageSound);
@@ -158,6 +166,26 @@ export default function Room() {
     };
   }, [isTabFocused]);
 
+  const getSenderName = (user: JwtPayload | null, message: Message, room: Room): string => {
+    const currentUserId = Number(user?.sub);
+
+    if (user) {
+      return currentUserId === message.userId ? 'Вы' : room.patientName;
+    }
+
+    return message.userId ? room.user.name : 'Вы';
+  };
+
+  const isMe = (user: JwtPayload | null, message: Message): boolean => {
+    const currentUserId = Number(user?.sub);
+
+    if (user) {
+      return currentUserId === message.userId;
+    }
+
+    return !message.userId;
+  };
+
   if (!room) return null
 
   const isPatientConnected = ((typeof socket?.id === 'string' || typeof socket?.id === 'number') && onlineUsers.includes(socket.id))
@@ -168,7 +196,10 @@ export default function Room() {
         <div className="p-4 border-b bg-white shadow z-10">
           <div className="flex flex-col gap-1">
             <h1 className="text-xl font-semibold items-center gap-2 flex justify-between flex-col sm:flex-row">
-              <span>Консультация</span>
+              {user.user && user.user.role === 'admin' && (
+                <Link href="/rooms">Назад к списку</Link>
+              )}
+              <span>Он-лайн консультация</span>
               <span className="flex flex-col gap-4 sm:flex-row">
                 <span className="flex items-center gap-1">
                   <span className={`flex w-3 h-3 rounded-full ${isPatientConnected ? 'bg-green-500' : 'bg-red-500'}`} />
@@ -186,32 +217,42 @@ export default function Room() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50">
+        <div className="flex-1 overflow-y-auto gap-1 flex flex-col p-4 bg-gray-50">
           {messages.map((m) => (
-              <div key={m.id} className="border-b pb-1">
-                <strong>{m.user ? m.user.name : room.patientName}:</strong>{' '}
-                {m.type === 'TEXT' && (
-                  <div className="whitespace-pre-wrap">{m.content}</div>
-                )}
-                {m.type === 'IMAGE' && (
-                    <img src={m.content} className="w-32 mt-1" alt="uploaded" />
-                )}
-                {m.type === 'FILE' && (
-                    <a
-                        href={m.content}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-600 underline"
-                    >
-                      Скачать файл
-                    </a>
-                )}
-              </div>
+            <div key={m.id} className={`border-b p-2 rounded-lg shadow-sm ${isMe(user.user, m) && 'bg-primary-50'}`}>
+              <strong>{getSenderName(user.user, m, room)}:</strong>
+
+              {m.type === 'TEXT' && (
+                <div className="whitespace-pre-wrap">{m.content}</div>
+              )}
+              {m.type === 'IMAGE' && (
+                <>
+                  <img src={m.content} className="w-32 mt-1" alt="uploaded" />
+                  <Link
+                    href={m.content}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 underline"
+                  >
+                    Открыть
+                  </Link>
+                </>
+              )}
+              {m.type === 'FILE' && (
+                <Link
+                  href={m.content}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-600 underline"
+                >
+                  Скачать файл
+                </Link>
+              )}
+            </div>
           ))}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
         <div className="p-4 border-t bg-white flex flex-col sm:flex-row items-start sm:items-center gap-2">
           <Textarea
             ref={textareaRef}
@@ -219,6 +260,11 @@ export default function Room() {
             onChange={(e) => {
               setText(e.target.value);
               handleTyping();
+            }}
+            onKeyDown={(e) => {
+              if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                handleSend();
+              }
             }}
             rows={3}
             placeholder="Введите сообщение"
@@ -233,10 +279,10 @@ export default function Room() {
             </Button>
 
             <input
-                type="file"
-                id="file"
-                onChange={handleFileChange}
-                className="hidden"
+              type="file"
+              id="file"
+              onChange={handleFileChange}
+              className="hidden"
             />
             <label
                 htmlFor="file"

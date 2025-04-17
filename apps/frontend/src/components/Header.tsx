@@ -1,8 +1,17 @@
 import { Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Button } from "@heroui/react";
 import { useUser } from "@/hooks/useUser.ts";
+import {useNavigate} from "react-router-dom";
 
 const Header = ()=>  {
-  const { user } = useUser();
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
+
+  const onLogout = () => {
+    if (user) {
+      logout();
+      navigate('/login')
+    }
+  }
 
   return (
       <Navbar
@@ -14,8 +23,8 @@ const Header = ()=>  {
         <NavbarBrand>
           <Link href="/">Алёнушка :: Онлайн-консультации</Link>
         </NavbarBrand>
-        {user && (
-          <NavbarContent className="hidden sm:flex gap-4" justify="center">
+        {user && user.role === 'admin' && (
+          <NavbarContent className="sm:flex gap-4" justify="center">
             <NavbarItem>
               <Link color="success" href="/rooms">
                 Список консультаций
@@ -25,6 +34,12 @@ const Header = ()=>  {
               <Link color="danger" href="/rooms/create">
                  Создать консультацию
               </Link>
+            </NavbarItem>
+
+            <NavbarItem>
+              <Button onPress={onLogout}>
+                Выход
+              </Button>
             </NavbarItem>
           </NavbarContent>
         )}

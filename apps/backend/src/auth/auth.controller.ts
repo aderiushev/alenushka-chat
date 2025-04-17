@@ -1,6 +1,8 @@
-import { Body, Controller, Post, Get } from '@nestjs/common';
+import {Body, Controller, Post, Get, UseGuards} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
+import {Roles} from "./roles.decorator";
+import {RolesGuard} from "./roles.guard";
 
 @Controller('auth')
 export class AuthController {
@@ -16,7 +18,8 @@ export class AuthController {
     return this.authService.login(body.email, body.password);
   }
 
-  // New GET endpoint to fetch the list of users
+  @Roles('admin')
+  @UseGuards(RolesGuard)
   @Get('users')
   async getUsers() {
     return this.prisma.user.findMany({

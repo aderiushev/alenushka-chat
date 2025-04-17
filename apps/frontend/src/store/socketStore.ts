@@ -24,6 +24,8 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       extraHeaders: {
         Authorization: token ? `Bearer ${token}` : '',
       },
+      path: '/socket.io',
+      transports: ['websocket'],
     });
 
     socket.on('initial-messages', (initialMessages: Message[]) => {

@@ -54,7 +54,7 @@ let AuthService = class AuthService {
     }
     async register(name, email, password) {
         const hashed = await bcrypt.hash(password, 10);
-        const user = await this.prisma.user.create({ data: { name, email, password: hashed, role: 'admin' } });
+        const user = await this.prisma.user.create({ data: { name, email, password: hashed, role: 'doctor' } });
         return { token: this.jwtService.sign(user) };
     }
     async login(email, password) {
