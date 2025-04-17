@@ -24,7 +24,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       extraHeaders: {
         Authorization: token ? `Bearer ${token}` : '',
       },
-      path: '/api/socket.io/',
+      path: '/api/socket.io',
     });
 
     socket.on('initial-messages', (initialMessages: Message[]) => {
