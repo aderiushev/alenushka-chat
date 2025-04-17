@@ -17,7 +17,7 @@ let JwtService = class JwtService {
         this.jwtService = jwtService;
     }
     sign(user) {
-        const payload = { sub: user.id, role: user.role };
+        const payload = { sub: user.id, role: user.role, name: user.name };
         return this.jwtService.sign(payload);
     }
     verify(token) {

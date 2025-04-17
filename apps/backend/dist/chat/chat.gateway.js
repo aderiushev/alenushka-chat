@@ -25,11 +25,12 @@ let ChatGateway = class ChatGateway {
         this.onlineUsers = new Set();
     }
     getUserIdFromSocket(client) {
-        var _a;
-        const token = (_a = client.handshake.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(' ')[1];
+        const token = client.handshake.query.token;
+        console.log('debug token', token);
         if (token) {
             try {
                 const decoded = this.jwtService.verify(token);
+                console.log('debug decoded', decoded);
                 return decoded.sub;
             }
             catch (err) {
@@ -94,7 +95,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ChatGateway.prototype, "handleSendMessage", null);
 exports.ChatGateway = ChatGateway = __decorate([
-    (0, websockets_1.WebSocketGateway)({ cors: true, namespace: '/' }),
+    (0, websockets_1.WebSocketGateway)({ cors: true, namespace: '/', path: '/api/socket.io' }),
     __metadata("design:paramtypes", [chat_service_1.ChatService,
         jwt_service_1.JwtService])
 ], ChatGateway);
