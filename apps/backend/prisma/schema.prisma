@@ -40,11 +40,3 @@ model Doctor {
   messages    Message[] @relation("DoctorMessages")
   description String?
 }
-
-model Doctor {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
-  password String
-  doctor   Doctor?
-  role     String @default("doctor")
-}
