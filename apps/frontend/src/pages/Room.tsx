@@ -9,7 +9,7 @@ import {Textarea} from "@heroui/input";
 import {Avatar, Button, Link} from "@heroui/react";
 // @ts-ignore
 import messageSound from '../../public/sounds/new-message.mp3';
-import {useDoctor} from "@/hooks/useDoctor.ts";
+import {useDoctor} from "@/hooks/useDoctor";
 
 export default function Room() {
   const { id } = useParams();
