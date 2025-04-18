@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {api} from "../api";
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useSearchParams} from "react-router-dom";
 import {Input} from "@heroui/input";
 import {Button, Form } from "@heroui/react";
 import Header from "../components/Header";
@@ -9,12 +9,19 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const roomId = searchParams.get('roomId');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await api.post('/auth/login', { email, password });
     localStorage.setItem('token', res.data.token);
-    navigate('/rooms')
+
+    if (roomId) {
+      navigate(`/room/${roomId}`);
+    } else {
+      navigate('/rooms');
+    }
   };
 
   return (

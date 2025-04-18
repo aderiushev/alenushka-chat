@@ -20,7 +20,7 @@ const Header = ()=>  {
         style={{ '--navbar-height': 'auto' }}
         classNames={{ wrapper: "flex flex-col sm:flex-row" }}
     >
-      <NavbarBrand className="gap-2">
+      <NavbarBrand className="gap-2 flex-col sm:flex-row">
         {user && (
           <h3>
             {user.doctor? user.doctor.name : user.email}

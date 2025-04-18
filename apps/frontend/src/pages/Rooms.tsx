@@ -50,7 +50,7 @@ export default function Rooms() {
                     </p>
                     {room.messages[0] && (
                       <p className="truncate gap-1">
-                        <span>Последнее сообщение:</span><span>{room.messages[0].content}</span>
+                        <span>Последнее сообщение: </span><span>{room.messages[0].content}</span>
                       </p>
                     )}
                   </CardBody>

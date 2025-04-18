@@ -35,14 +35,14 @@ export default function Room() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (doctorId && !user) {
-      navigate('/login');
+    if (room && doctorId && !user) {
+      navigate(`/login?roomId=${room.id}`);
     }
 
-    if (user && doctorId && Number(doctorId) !== user.doctorId && user.role !== 'admin') {
-      navigate('/login');
+    if (room && user && doctorId && Number(doctorId) !== user.doctorId && user.role !== 'admin') {
+      navigate(`/login?roomId=${room.id}`);
     }
-  }, [doctorId, user]);
+  }, [doctorId, user, room]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
