@@ -6,11 +6,9 @@ import { Prisma } from '@prisma/client';
 export class ChatService {
   constructor(private prisma: PrismaService) {}
 
-  async createMessage(dto: Prisma.MessageUncheckedCreateInput) {
+  async createMessage(data: Prisma.MessageUncheckedCreateInput) {
     const message = await this.prisma.message.create({
-      data: {
-        ...dto,
-      },
+      data
     });
 
     return this.prisma.message.findFirst({
@@ -18,7 +16,7 @@ export class ChatService {
         id: message.id
       },
       include: {
-        user: true,
+        doctor: true,
       }
     });
   }
@@ -28,7 +26,7 @@ export class ChatService {
       where: { roomId },
       orderBy: { createdAt: 'asc' },
       include: {
-        user: true,
+        doctor: true,
       },
     });
   }

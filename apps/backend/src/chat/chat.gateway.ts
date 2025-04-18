@@ -28,13 +28,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   getUserIdFromSocket(client: Socket): string | null {
     const token = client.handshake.query.token as string;
 
-    console.log('debug token', token)
-
     if (token) {
       try {
         const decoded = this.jwtService.verify(token);
-
-        console.log('debug decoded', decoded)
 
         return decoded.sub;
       } catch (err) {

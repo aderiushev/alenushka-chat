@@ -7,7 +7,7 @@ export class JwtService {
   constructor(private jwtService: NestJwtService) {}
 
   sign(user: User) {
-    const payload = { sub: user.id, role: user.role, name: user.name };
+    const payload = { sub: user.id, role: user.role };
     return this.jwtService.sign(payload);
   }
 

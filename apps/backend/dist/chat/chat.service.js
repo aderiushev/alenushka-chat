@@ -27,7 +27,7 @@ let ChatService = class ChatService {
                 id: message.id
             },
             include: {
-                user: true,
+                doctor: true,
             }
         });
     }
@@ -36,7 +36,7 @@ let ChatService = class ChatService {
             where: { roomId },
             orderBy: { createdAt: 'asc' },
             include: {
-                user: true,
+                doctor: true,
             },
         });
     }

@@ -5,13 +5,40 @@ import { PrismaService } from '../prisma/prisma.service';
 export class RoomsService {
   constructor(private prisma: PrismaService) {}
 
-  create(patientName: string, userId: number) {
-    return this.prisma.room.create({ data: { patientName, userId } });
+  create(patientName: string, doctorId: number) {
+    return this.prisma.room.create({ data: { patientName, doctorId } });
   }
 
   findAll() {
     return this.prisma.room.findMany({
-      include: { user: true, messages: { orderBy: { createdAt: 'desc' }, take: 1 } },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: { doctor: true, messages: { orderBy: { createdAt: 'desc' }, take: 1 } },
+    });
+  }
+
+  async findAllByUserId(userId: number) {
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (!doctor) {
+      throw new Error('Doctor not found for this user');
+    }
+
+    return this.prisma.room.findMany({
+      where: {
+        doctorId: doctor.id,
+      },
+      include: {
+        doctor: true,
+        messages: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
   }
 
@@ -19,8 +46,18 @@ export class RoomsService {
     return this.prisma.room.findUnique({
       where: { id },
       include: {
-        user: true,
+        doctor: true,
       },
+    });
+  }
+
+  async markRoomAsCompleted(id: string) {
+    return this.prisma.room.update({
+      where: { id },
+      data: { status: 'completed' },
+      include: {
+        doctor: true,
+      }
     });
   }
 }

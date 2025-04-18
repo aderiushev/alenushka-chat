@@ -1,14 +1,15 @@
-import { useParams } from 'react-router-dom';
+import {useNavigate, useParams} from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useSocketStore } from '../store/socketStore';
 import { api } from '../api';
 import {useUser} from "../hooks/useUser";
 import {useRoom} from "../hooks/useRoom";
 import {Textarea} from "@heroui/input";
-import {Button, Link} from "@heroui/react";
+import {Avatar, Button, Link} from "@heroui/react";
 // @ts-ignore
 import messageSound from '../../public/sounds/new-message.mp3';
-import {JwtPayload} from "jwt-decode";
+import {useDoctor} from "@/hooks/useDoctor.ts";
 
 export default function Room() {
   const { id } = useParams();
@@ -20,14 +21,28 @@ export default function Room() {
   const originalTitle = useRef(document.title);
   const flickerInterval = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [searchParams] = useSearchParams();
+  const doctorId = searchParams.get('doctorId');
 
   const socket = useSocketStore((state) => state.socket);
   const sendMessage = useSocketStore((s) => s.sendMessage);
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const user = useUser();
-  const room = useRoom(id);
+  const { user } = useUser();
+  const { room, refetch } = useRoom(id);
+  const { doctor } = useDoctor(room?.doctorId);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (doctorId && !user) {
+      navigate('/login');
+    }
+
+    if (user && doctorId && Number(doctorId) !== user.doctorId && user.role !== 'admin') {
+      navigate('/login');
+    }
+  }, [doctorId, user]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -78,7 +93,7 @@ export default function Room() {
   const handleSend = () => {
     if (!text.trim() || !id) return;
 
-    sendMessage({ roomId: id, userId: user.user ? Number(user.user.sub) : undefined, type: 'TEXT', content: text });
+    sendMessage({ roomId: id, doctorId: user ? user.doctor?.id : undefined, type: 'TEXT', content: text });
     setText('');
   };
 
@@ -93,7 +108,7 @@ export default function Room() {
     const url = res.data.url;
 
     const type = file.type.startsWith('image/') ? 'IMAGE' : 'FILE';
-    sendMessage({ roomId: id, userId: user.user ? Number(user.user.sub) : undefined, type, content: url });
+    sendMessage({ roomId: id, doctorId: doctor ? doctor.id : undefined, type, content: url });
   };
 
   const handleTyping = () => {
@@ -101,6 +116,16 @@ export default function Room() {
       socket.emit('typing', id);
     }
   };
+
+  const handleEnd = async () => {
+    if (room) {
+      const isConfirm = window.confirm('Вы действительно хотите завершить консультацию?');
+      if (isConfirm) {
+        await api.post(`/rooms/${room.id}/end`);
+        refetch();
+      }
+    }
+  }
 
   useEffect(() => {
     if (!socket || !id) return;
@@ -170,131 +195,163 @@ export default function Room() {
     };
   }, [isTabFocused]);
 
-  const getSenderName = (user: JwtPayload | null, message: Message, room: Room): string => {
-    const currentUserId = Number(user?.sub);
-
+  const getSenderName = (user: User | null, message: Message, room: Room): string => {
     if (user) {
-      return currentUserId === message.userId ? 'Вы' : room.patientName;
+      return user.doctor?.id === message.doctorId ? 'Вы' : room.patientName;
     }
 
-    return message.userId ? room.user.name : 'Вы';
+    return message.doctorId ? room.doctor.name : 'Вы';
   };
 
-  const isMe = (user: JwtPayload | null, message: Message): boolean => {
-    const currentUserId = Number(user?.sub);
-
+  const isMe = (user: User | null, message: Message): boolean => {
     if (user) {
-      return currentUserId === message.userId;
+      return user.doctor?.id === message.doctorId;
     }
 
-    return !message.userId;
+    return !message.doctorId;
   };
 
   if (!room) return null
 
   const isPatientConnected = ((typeof socket?.id === 'string' || typeof socket?.id === 'number') && onlineUsers.includes(socket.id))
-      || (onlineUsers.length > 1 && onlineUsers.includes(room.user.id));
+      || (onlineUsers.length > 1 && onlineUsers.includes(room.doctor.userId));
+
+  const isCanEnd = user && (user.role === 'admin' || user.id === room.doctor.userId);
 
   return (
-      <div className="flex flex-col h-screen">
-        <div className="p-4 border-b bg-white shadow z-10">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-xl font-semibold items-center gap-2 flex justify-between flex-col sm:flex-row">
-              {user.user && user.user.role === 'admin' && (
-                <Link href="/rooms">Назад к списку</Link>
+      <div className="flex gap-1">
+        <div className="flex flex-col h-screen flex-1">
+          <div className="p-4 border-b bg-white shadow z-10">
+            <div className="flex flex-col gap-1">
+              <div className="flex gap-2 flex-col">
+                <div className="text-xl font-semibold gap-2 flex justify-between flex-col sm:flex-row flex-1">
+                  {user && (
+                    <Link href="/rooms">Назад к списку</Link>
+                  )}
+                  <span>Он-лайн консультация</span>
+                  <span className="flex flex-col gap-1 sm:flex-row">
+                    <span className="flex items-center gap-1">
+                      <span className={`flex w-3 h-3 rounded-full ${isPatientConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <span>{user ? room.patientName : 'Вы'}</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className={`flex w-3 h-3 rounded-full ${onlineUsers.includes(room.doctor.userId) ? 'bg-green-500' : 'bg-red-500'}`} />
+                     <span>{user ? 'Вы' : room.doctor.name}</span>
+                    </span>
+                  </span>
+                </div>
+                {doctor && (
+                  <div className="flex gap-2 items-center">
+                    <Avatar size="lg" src={doctor.imageUrl} />
+                    <div className="flex flex-col gap-0.5">
+                      <div className="text-xs">{doctor.name}</div>
+                      <div className="text-xs">{doctor.description}</div>
+                      <Link className="text-xs" target="_blank" href={doctor.externalUrl}>Описание</Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {isTyping && (
+                <span className="text-sm text-gray-500">Пользователь печатает...</span>
               )}
-              <span>Он-лайн консультация</span>
-              <span className="flex flex-col gap-4 sm:flex-row">
-                <span className="flex items-center gap-1">
-                  <span className={`flex w-3 h-3 rounded-full ${isPatientConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-                  <span>{room.patientName}</span>
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className={`flex w-3 h-3 rounded-full ${onlineUsers.includes(room.user.id) ? 'bg-green-500' : 'bg-red-500'}`} />
-                  <span>Вы ({room.user.name})</span>
-                </span>
-              </span>
-            </h1>
-            {isTyping && (
-              <span className="text-sm text-gray-500">Пользователь печатает...</span>
-            )}
+            </div>
           </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto gap-1 flex flex-col p-4 bg-gray-50">
-          {messages.map((m) => (
-            <div key={m.id} className={`border-b p-2 rounded-lg shadow-sm ${isMe(user.user, m) && 'bg-primary-50'}`}>
-              <strong>{getSenderName(user.user, m, room)}:</strong>
+          <div className="flex-1 overflow-y-auto gap-1 flex flex-col p-4 bg-gray-50">
+            {messages.map((m) => (
+              <div key={m.id} className={`border-b p-2 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, m) && 'bg-primary-50'}`}>
+                <div className="flex gap-2 items-center">
+                  {m.doctorId && (
+                    <Avatar src={m.doctor?.imageUrl} />
+                  )}
+                  <strong>{getSenderName(user, m, room)}:</strong>
+                </div>
 
-              {m.type === 'TEXT' && (
-                <div className="whitespace-pre-wrap">{m.content}</div>
-              )}
-              {m.type === 'IMAGE' && (
-                <>
-                  <img src={m.content} className="w-32 mt-1" alt="uploaded" />
+                {m.type === 'TEXT' && (
+                  <div className="whitespace-pre-wrap">{m.content}</div>
+                )}
+                {m.type === 'IMAGE' && (
+                  <>
+                    <img src={m.content} className="w-32 mt-1" alt="uploaded" />
+                    <Link
+                      href={m.content}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      Открыть
+                    </Link>
+                  </>
+                )}
+                {m.type === 'FILE' && (
                   <Link
                     href={m.content}
                     target="_blank"
                     rel="noreferrer"
                     className="text-blue-600 underline"
                   >
-                    Открыть
+                    Скачать файл
                   </Link>
-                </>
-              )}
-              {m.type === 'FILE' && (
-                <Link
-                  href={m.content}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-600 underline"
-                >
-                  Скачать файл
-                </Link>
-              )}
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-
-        <div className="p-4 border-t bg-white flex flex-col sm:flex-row items-start sm:items-center gap-2">
-          <Textarea
-            ref={textareaRef}
-            value={text}
-            onChange={(e) => {
-              setText(e.target.value);
-              handleTyping();
-            }}
-            onKeyDown={(e) => {
-              if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                handleSend();
-              }
-            }}
-            rows={3}
-            placeholder="Введите сообщение"
-          />
-
-          <div className="flex gap-2 justify-between w-full md:w-auto">
-            <Button
-              color="primary"
-              onPress={handleSend}
-            >
-              Отправить
-            </Button>
-
-            <input
-              type="file"
-              id="file"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            <label
-                htmlFor="file"
-                className="whitespace-nowrap inline-block cursor-pointer px-4 py-2 bg-blue-600 text-white rounded-[12px] px-[16px] hover:bg-blue-500 transition"
-            >
-              Прикрепить файл
-            </label>
+                )}
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
           </div>
+
+          {room && room.status === 'active' ? (
+            <div className="p-4 border-t bg-white flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <Textarea
+                ref={textareaRef}
+                value={text}
+                onChange={(e) => {
+                  setText(e.target.value);
+                  handleTyping();
+                }}
+                onKeyDown={(e) => {
+                  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    handleSend();
+                  }
+                }}
+                rows={3}
+                placeholder="Введите сообщение"
+              />
+
+              <div className="flex gap-2 justify-between w-full md:w-auto">
+                <Button
+                  color="primary"
+                  onPress={handleSend}
+                >
+                  Отправить
+                </Button>
+
+                <input
+                  type="file"
+                  id="file"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="file"
+                  className="whitespace-nowrap inline-block cursor-pointer px-4 py-2 bg-blue-600 text-white rounded-[12px] px-[16px] hover:bg-blue-500 transition"
+                >
+                  Прикрепить файл
+                </label>
+
+                {isCanEnd && (
+                  <Button
+                    color="danger"
+                    onPress={handleEnd}
+                  >
+                    Завершить
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 border-t bg-white flex flex-col sm:flex-row justify-center gap-2">
+                <p className="text-center">Консультация завершена</p>
+            </div>
+          )}
         </div>
       </div>
   );

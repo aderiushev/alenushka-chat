@@ -20,47 +20,38 @@ const Header = ()=>  {
         style={{ '--navbar-height': 'auto' }}
         classNames={{ wrapper: "flex flex-col sm:flex-row" }}
     >
-      <NavbarBrand>
+      <NavbarBrand className="gap-2">
         {user && (
           <h3>
-            {user.name} ({user.role})
+            {user.doctor? user.doctor.name : user.email}
           </h3>
         )}
-        <Link href="/">Алёнушка :: Онлайн-консультации</Link>
+        <Link href="/login">Алёнушка :: Онлайн-консультации</Link>
       </NavbarBrand>
       {user && (
-        <NavbarContent className="sm:flex gap-4" justify="center">
-          <NavbarItem>
-            <Link color="success" href="/rooms">
-              Список консультаций
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Link color="danger" href="/rooms/create">
-               Создать консультацию
-            </Link>
-          </NavbarItem>
-
+        <NavbarContent className="flex gap-4 flex-col sm:flex-row" justify="center">
           {user.role === 'admin' && (
+            <>
+              <NavbarItem>
+                <Link color="success" href="/rooms">
+                  Список консультаций
+                </Link>
+              </NavbarItem>
+              <NavbarItem>
+                <Link color="danger" href="/rooms/create">
+                   Создать консультацию
+                </Link>
+              </NavbarItem>
+            </>
+          )}
+
+          {user.role && (
             <NavbarItem>
               <Button onPress={onLogout}>
                 Выход
               </Button>
             </NavbarItem>
           )}
-        </NavbarContent>
-      )}
-
-      {!user && (
-        <NavbarContent justify="end">
-          <NavbarItem>
-            <Button as={Link} color="primary" href="/login" variant="bordered">Вход</Button>
-          </NavbarItem>
-          <NavbarItem>
-            <Button as={Link} color="primary" href="/register" variant="flat">
-              Регистрация
-            </Button>
-          </NavbarItem>
         </NavbarContent>
       )}
     </Navbar>

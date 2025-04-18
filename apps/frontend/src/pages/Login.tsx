@@ -24,16 +24,16 @@ export default function Login() {
           <Form onSubmit={handleLogin} className="bg-white p-6 rounded shadow-md w-full max-w-sm">
             <h2 className="text-2xl mb-4 font-semibold">Вход</h2>
             <Input
-                type="email"
-                placeholder="Эл. почта"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+              type="email"
+              placeholder="Эл. почта"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
             />
             <Input
-                type="password"
-                placeholder="Пароль"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
+              type="password"
+              placeholder="Пароль"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
             />
             <Button type="submit" color="primary">
               Войти

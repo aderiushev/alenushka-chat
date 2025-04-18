@@ -9,22 +9,22 @@ export default function CreateRoom() {
   const [patientName, setPatientName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [users, setUsers] = useState<{ id: string, name: string }[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
   // Fetch users from the backend
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchDoctors = async () => {
       try {
-        const response = await api.get('/auth/users'); // Assuming /users API returns a list of users
-        setUsers(response.data);
+        const response = await api.get('/auth/doctors'); // Assuming /users API returns a list of users
+        setDoctors(response.data);
       } catch (error) {
         setError('Failed to fetch users');
       }
     };
-    fetchUsers();
+    fetchDoctors();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,13 +60,13 @@ export default function CreateRoom() {
           <Form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-full max-w-sm">
             <h2 className="text-2xl mb-4 font-semibold">Создать консультацию</h2>
               <Select
-                  placeholder="Выберите врача"
-                  items={users}
-                  value={selectedUserId || ''}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  required
+                placeholder="Выберите врача"
+                items={doctors}
+                value={selectedUserId || ''}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                required
               >
-                {(user) => <SelectItem>{user.name}</SelectItem>}
+                {(doctor) => <SelectItem>{doctor.name}</SelectItem>}
               </Select>
 
               <Input

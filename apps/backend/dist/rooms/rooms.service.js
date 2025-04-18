@@ -16,20 +16,29 @@ let RoomsService = class RoomsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    create(patientName, userId) {
-        return this.prisma.room.create({ data: { patientName, userId } });
+    create(patientName, doctorId) {
+        return this.prisma.room.create({ data: { patientName, doctorId } });
     }
     findAll() {
         return this.prisma.room.findMany({
-            include: { user: true, messages: { orderBy: { createdAt: 'desc' }, take: 1 } },
+            orderBy: {
+                createdAt: 'desc',
+            },
+            include: { doctor: true, messages: { orderBy: { createdAt: 'desc' }, take: 1 } },
         });
     }
     findById(id) {
         return this.prisma.room.findUnique({
             where: { id },
             include: {
-                user: true,
+                doctor: true,
             },
+        });
+    }
+    async markRoomAsCompleted(id) {
+        return this.prisma.room.update({
+            where: { id },
+            data: { status: 'completed' },
         });
     }
 };

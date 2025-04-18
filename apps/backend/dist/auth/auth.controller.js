@@ -24,16 +24,15 @@ let AuthController = class AuthController {
         this.prisma = prisma;
     }
     async register(body) {
-        return this.authService.register(body.name, body.email, body.password);
+        return this.authService.register(body.email, body.password);
     }
     async login(body) {
         return this.authService.login(body.email, body.password);
     }
     async getUsers() {
-        return this.prisma.user.findMany({
-            select: {
-                id: true,
-                name: true,
+        return this.prisma.doctor.findMany({
+            include: {
+                user: true,
             },
         });
     }
@@ -56,7 +55,7 @@ __decorate([
 __decorate([
     (0, roles_decorator_1.Roles)('admin'),
     (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
-    (0, common_1.Get)('users'),
+    (0, common_1.Get)('doctors'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)

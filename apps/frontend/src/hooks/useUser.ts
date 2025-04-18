@@ -1,35 +1,34 @@
-import { jwtDecode } from "jwt-decode";
+import { useState, useEffect } from "react";
+import { api } from "../api";
 
-interface JwtPayload {
-  sub: string;
-  role: string;
-  exp: number;
-  name: string;
-}
+export function useUser() {
+  const [user, setUser] = useState<null | User>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-export function useUser(): { user: JwtPayload | null; logout: () => void } {
-  const token = localStorage.getItem('token');
-
-  let user: JwtPayload | null = null;
-
-  try {
-    if (token) {
-      const decoded: JwtPayload = jwtDecode(token);
-      const currentTime = Math.floor(Date.now() / 1000);
-
-      if (decoded.exp >= currentTime) {
-        user = decoded;
-      } else {
-        localStorage.removeItem('token');
-      }
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setUser(null);
+      setIsLoading(false);
+      return;
     }
-  } catch {
-    localStorage.removeItem('token');
-  }
+
+    api
+      .get("/auth/me")
+      .then((res) => {
+        setUser(res.data);
+      })
+      .catch(() => {
+        setUser(null);
+        localStorage.removeItem("token");
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const logout = () => {
-    localStorage.removeItem('token');
+    setUser(null);
+    localStorage.removeItem("token");
   };
 
-  return { user, logout };
+  return { user, isLoading, logout };
 }

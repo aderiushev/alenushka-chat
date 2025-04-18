@@ -7,9 +7,9 @@ import * as bcrypt from 'bcryptjs';
 export class AuthService {
   constructor(private prisma: PrismaService, private jwtService: JwtService) {}
 
-  async register(name: string, email: string, password: string) {
+  async register(email: string, password: string) {
     const hashed = await bcrypt.hash(password, 10);
-    const user = await this.prisma.user.create({ data: { name, email, password: hashed, role: 'doctor' } });
+    const user = await this.prisma.user.create({ data: { email, password: hashed, role: 'doctor' } });
     return { token: this.jwtService.sign(user) };
   }
 

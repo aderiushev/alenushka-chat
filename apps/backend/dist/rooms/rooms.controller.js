@@ -30,6 +30,9 @@ let RoomsController = class RoomsController {
     findOne(id) {
         return this.roomsService.findById(id);
     }
+    async endRoom(id) {
+        return this.roomsService.markRoomAsCompleted(id);
+    }
 };
 exports.RoomsController = RoomsController;
 __decorate([
@@ -56,6 +59,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], RoomsController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Post)(':id/end'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], RoomsController.prototype, "endRoom", null);
 exports.RoomsController = RoomsController = __decorate([
     (0, common_1.Controller)('rooms'),
     __metadata("design:paramtypes", [rooms_service_1.RoomsService])
