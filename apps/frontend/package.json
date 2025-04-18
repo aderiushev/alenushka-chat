@@ -8,7 +8,7 @@
     "build": "tsc && vite build",
     "lint": "eslint -c ../.eslintrc.json ./src/**/**/*.{ts,tsx} --fix",
     "preview": "vite preview",
-    "serve": "serve -s ./dist -l 4001",
+    "serve": "serve -s ./dist -l 4000",
     "prod": "pm2 start npm --name \"pediatr-chat\" -- serve"
   },
   "dependencies": {
