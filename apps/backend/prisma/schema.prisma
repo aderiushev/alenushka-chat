@@ -35,8 +35,16 @@ model Doctor {
   name        String
   externalUrl String
   userId      Int       @unique
-  user        Doctor      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
   rooms       Room[]    @relation("DoctorRooms")
   messages    Message[] @relation("DoctorMessages")
   description String?
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  password String
+  doctor   Doctor?
+  role     String @default("doctor")
 }
