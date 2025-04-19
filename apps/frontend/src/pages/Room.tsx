@@ -11,6 +11,30 @@ import {Avatar, Button, Link} from "@heroui/react";
 import messageSound from '../../public/sounds/new-message.mp3';
 import {useDoctor} from "@/hooks/useDoctor";
 
+type IconProps = {
+  width?: number;
+  height?: number;
+  fill?: string;
+}
+
+const SendIcon = (props: IconProps) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" {...props}>
+    <path d="M16.1 260.2c-22.6 12.9-20.5 47.3 3.6 57.3L160 376v103.3c0 18.1 14.6 32.7 32.7 32.7 9.7 0 18.9-4.3 25.1-11.8l62-74.3 123.9 51.6c18.9 7.9 40.8-4.5 43.9-24.7l64-416c1.9-12.1-3.4-24.3-13.5-31.2s-23.3-7.5-34-1.4zm52.1 25.5L409.7 90.6 190.1 336l1.2 1zm335.1 139.7-166.6-69.5 214.1-239.3z"></path>
+  </svg>
+);
+
+const FileIcon = (props: IconProps) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" {...props}>
+    <path d="M364.2 83.8c-24.4-24.4-64-24.4-88.4 0l-184 184c-42.1 42.1-42.1 110.3 0 152.4s110.3 42.1 152.4 0l152-152c10.9-10.9 28.7-10.9 39.6 0s10.9 28.7 0 39.6l-152 152c-64 64-167.6 64-231.6 0s-64-167.6 0-231.6l184-184c46.3-46.3 121.3-46.3 167.6 0s46.3 121.3 0 167.6l-176 176c-28.6 28.6-75 28.6-103.6 0s-28.6-75 0-103.6l144-144c10.9-10.9 28.7-10.9 39.6 0s10.9 28.7 0 39.6l-144 144c-6.7 6.7-6.7 17.7 0 24.4s17.7 6.7 24.4 0l176-176c24.4-24.4 24.4-64 0-88.4"></path>
+  </svg>
+);
+
+const CloseIcon = (props: IconProps) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" {...props}>
+    <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3l105.4 105.3c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256z"></path>
+  </svg>
+);
+
 export default function Room() {
   const { id } = useParams();
   const connect = useSocketStore((s) => s.connect);
@@ -217,6 +241,7 @@ export default function Room() {
       || (onlineUsers.length > 1 && onlineUsers.includes(room.doctor.userId));
 
   const isCanEnd = user && (user.role === 'admin' || user.id === room.doctor.userId);
+  const isCanEdit = !user || user.role !== 'admin';
 
   return (
       <div className="flex gap-1">
@@ -224,25 +249,27 @@ export default function Room() {
           <div className="p-4 border-b bg-white shadow z-10">
             <div className="flex flex-col gap-1">
               <div className="flex gap-2 flex-col">
-                <div className="text-xl font-semibold gap-2 flex justify-between flex-col sm:flex-row flex-1">
+                <div className="gap-2 flex justify-between flex-col sm:flex-row flex-1">
                   {user && (
                     <Link href="/rooms">Назад к списку</Link>
                   )}
-                  <span>Он-лайн консультация</span>
+                  <span className="text-center text-xl font-semibold">Он-лайн консультация</span>
                   <span className="flex flex-col gap-1 sm:flex-row">
                     <span className="flex items-center gap-1">
                       <span className={`flex w-3 h-3 rounded-full ${isPatientConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                       <span>{user ? room.patientName : 'Вы'}</span>
                     </span>
-                    <span className="flex items-center gap-1">
-                      <span className={`flex w-3 h-3 rounded-full ${onlineUsers.includes(room.doctor.userId) ? 'bg-green-500' : 'bg-red-500'}`} />
-                     <span>{user ? 'Вы' : room.doctor.name}</span>
-                    </span>
+                    {isCanEdit && (
+                      <span className="flex items-center gap-1">
+                        <span className={`flex w-3 h-3 rounded-full ${onlineUsers.includes(room.doctor.userId) ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span>{user ? `Вы` : room.doctor.name}</span>
+                      </span>
+                    )}
                   </span>
                 </div>
                 {doctor && (
                   <div className="flex gap-2 items-center">
-                    <Avatar size="lg" src={doctor.imageUrl} />
+                    <Avatar className="w-[80px] h-[80px]" src={doctor.imageUrl} />
                     <div className="flex flex-col gap-0.5">
                       <div className="text-xs">{doctor.name}</div>
                       <div className="text-xs">{doctor.description}</div>
@@ -251,13 +278,10 @@ export default function Room() {
                   </div>
                 )}
               </div>
-              {isTyping && (
-                <span className="text-sm text-gray-500">Пользователь печатает...</span>
-              )}
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto gap-1 flex flex-col p-4 bg-gray-50">
+          <div className="flex-1 overflow-y-auto gap-1 flex flex-col px-4 bg-gray-50">
             {messages.map((m) => (
               <div key={m.id} className={`border-b p-2 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, m) && 'bg-primary-50'}`}>
                 <div className="flex gap-2 items-center">
@@ -295,63 +319,76 @@ export default function Room() {
                 )}
               </div>
             ))}
+            <div className="min-h-[20px] flex">
+              {isTyping && (
+                <span className="text-sm text-gray-500">Пользователь печатает...</span>
+              )}
+            </div>
             <div ref={messagesEndRef} />
           </div>
 
-          {room && room.status === 'active' ? (
-            <div className="p-4 border-t bg-white flex flex-col sm:flex-row items-start sm:items-center gap-2">
-              <Textarea
-                ref={textareaRef}
-                value={text}
-                onChange={(e) => {
-                  setText(e.target.value);
-                  handleTyping();
-                }}
-                onKeyDown={(e) => {
-                  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                    handleSend();
-                  }
-                }}
-                rows={3}
-                placeholder="Введите сообщение"
-              />
+          {isCanEdit && (
+              <>
 
-              <div className="flex gap-2 justify-between w-full md:w-auto">
-                <Button
-                  color="primary"
-                  onPress={handleSend}
-                >
-                  Отправить
-                </Button>
-
-                <input
-                  type="file"
-                  id="file"
-                  onChange={handleFileChange}
-                  className="hidden"
+            {room && room.status === 'active' ? (
+              <div className="p-4 border-t bg-white flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <Textarea
+                  classNames={{ input: "max-h-[200px]" }}
+                  ref={textareaRef}
+                  value={text}
+                  onChange={(e) => {
+                    setText(e.target.value);
+                    handleTyping();
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  rows={3}
+                  placeholder="Введите сообщение"
                 />
-                <label
-                  htmlFor="file"
-                  className="whitespace-nowrap inline-block cursor-pointer px-4 py-2 bg-blue-600 text-white rounded-[12px] px-[16px] hover:bg-blue-500 transition"
-                >
-                  Прикрепить файл
-                </label>
 
-                {isCanEnd && (
-                  <Button
-                    color="danger"
-                    onPress={handleEnd}
-                  >
-                    Завершить
-                  </Button>
-                )}
+                  <div className="flex gap-2 justify-end w-full md:w-auto">
+                    <Button
+                      isIconOnly
+                      color="primary"
+                      onPress={handleSend}
+                    >
+                      <SendIcon width={20} height={20} fill="#fff" />
+                    </Button>
+
+                    <input
+                      type="file"
+                      id="file"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="file"
+                      className="w-[40px] h-[40px] flex items-center justify-center whitespace-nowrap cursor-pointer bg-blue-600 text-white rounded-[12px] hover:bg-blue-500 transition"
+                    >
+                      <FileIcon width={20} height={20} fill="#fff" />
+                    </label>
+
+                    {isCanEnd && (
+                      <Button
+                        isIconOnly
+                        color="danger"
+                        onPress={handleEnd}
+                      >
+                        <CloseIcon width={20} height={20} fill="#fff" />
+                      </Button>
+                    )}
+                  </div>
               </div>
-            </div>
-          ) : (
-            <div className="p-4 border-t bg-white flex flex-col sm:flex-row justify-center gap-2">
-                <p className="text-center">Консультация завершена</p>
-            </div>
-          )}
+            ) : (
+              <div className="p-4 border-t bg-white flex flex-col sm:flex-row justify-center gap-2">
+                  <p className="text-center">Консультация завершена</p>
+              </div>
+            )}
+          </>)}
         </div>
       </div>
   );
