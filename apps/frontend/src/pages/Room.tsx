@@ -1,4 +1,4 @@
-import {useNavigate, useParams} from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSocketStore } from '../store/socketStore';
@@ -10,6 +10,7 @@ import {Avatar, Button, Link} from "@heroui/react";
 // @ts-ignore
 import messageSound from '../../public/sounds/new-message.mp3';
 import {useDoctor} from "@/hooks/useDoctor";
+import {useNavigationBlock} from "@/hooks/useNavigationBlock.ts";
 
 type IconProps = {
   width?: number;
@@ -57,6 +58,8 @@ export default function Room() {
   const { room, refetch } = useRoom(id);
   const { doctor } = useDoctor(room?.doctorId);
   const navigate = useNavigate();
+
+  useNavigationBlock(textareaRef);
 
   useEffect(() => {
     if (room && doctorId && !user) {
