@@ -1,9 +1,8 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
+import RecordRTC from 'recordrtc';
 import { useSearchParams } from 'react-router-dom';
 import { useSocketStore } from '../store/socketStore';
-// @ts-ignore
-import { AudioRecorder }  from './../utils/audio';
 import { api } from '../api';
 import {useUser} from "../hooks/useUser";
 import {useRoom} from "../hooks/useRoom";
@@ -69,7 +68,7 @@ export default function Room() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const mediaRecorderRef = useRef<AudioRecorder | null>(null);
+  const mediaRecorderRef = useRef<RecordRTC | null>(null);
 
   const [isRecording, setIsRecording] = useState(false);
   const { user } = useUser();
@@ -191,80 +190,46 @@ export default function Room() {
   //   }
   // };
 
-  useEffect(() => {
-    mediaRecorderRef.current = new AudioRecorder()
-  }, []);
-
   const handleStartRecording = async () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-    }
+    const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+    mediaRecorderRef.current = new RecordRTC(stream, {
+      type: 'audio'
+    });
+
+    mediaRecorderRef.current.startRecording();
+    setIsRecording(true);
   }
 
   const handleStopRecording = async () => {
     if (mediaRecorderRef.current) {
-          mediaRecorderRef.current.stop(async (blob: Blob) => {
-            const file = new File([blob], `voice-message.webm`, {
-              type: 'audio/webm'
+      await mediaRecorderRef.current.stopRecording(async () => {
+        if (mediaRecorderRef.current) {
+          const blob = await mediaRecorderRef.current.getBlob();
+
+          const file = new File([blob], `voice-message.webm`, {
+            type: 'audio/webm'
+          });
+
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const res = await api.post('/upload/file', formData);
+          const url = res.data.url;
+
+          if (id) {
+            sendMessage({
+              roomId: id,
+              doctorId: doctor ? doctor.id : undefined,
+              type: 'AUDIO',
+              content: url,
             });
-            const formData = new FormData();
-            formData.append('file', file);
+          }
 
-            const res = await api.post('/upload/file', formData);
-            const url = res.data.url;
-
-            if (id) {
-              sendMessage({
-                roomId: id,
-                doctorId: doctor ? doctor.id : undefined,
-                type: 'AUDIO',
-                content: url,
-              });
-            }
-
-            setIsRecording(false);
-          })
+          setIsRecording(false);
+        }
+      });
     }
   }
-
-  // const handleStopRecording = async () => {
-  //   if (mediaRecorderRef.current) {
-  //     mediaRecorderRef.current.stopRecording(async () => {
-  //       if (mediaRecorderRef.current) {
-  //         const blob = mediaRecorderRef.current.getBlob();
-  //
-  //         const audioUrl = URL.createObjectURL(blob);
-  //         setAudioBlob(audioUrl);
-  //         // @ts-ignore
-  //         window.audioUrl = audioUrl;
-  //         const audioElement = new Audio(audioUrl);
-  //
-  //         // Play the audio
-  //         audioElement.play();
-  //
-  //         const file = new File([blob], `voice-message.webm`);
-  //
-  //         const formData = new FormData();
-  //         formData.append('file', file);
-  //
-  //         const res = await api.post('/upload/file', formData);
-  //         const url = res.data.url;
-  //
-  //         if (id) {
-  //           sendMessage({
-  //             roomId: id,
-  //             doctorId: doctor ? doctor.id : undefined,
-  //             type: 'AUDIO',
-  //             content: url,
-  //           });
-  //         }
-  //
-  //         setIsRecording(false);
-  //       }
-  //     })
-  //   }
-  // }
 
   const handleChangeAgree = (id: number) => {
     setAgree((state) => ({
@@ -408,8 +373,6 @@ export default function Room() {
   const isCanEnd = user && (user.role === 'admin' || user.id === room.doctor.userId);
   const isCanEdit = isReady && (!user || user.role !== 'admin');
   const isAgree = Object.values(agree).every((item) => item)
-
-  console.log('debug msg', messages)
 
   return (
     <div className="flex gap-1 flex-1">

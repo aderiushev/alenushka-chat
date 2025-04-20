@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create an axios instance
 export const api = axios.create({
-  baseURL: process.env.NODE_ENV === 'development' ? 'http://192.168.0.19:4001' : `${window.location.protocol}//${window.location.hostname}/api`,
+  baseURL: process.env.NODE_ENV === 'development' ? 'http://localhost:4001' : `${window.location.protocol}//${window.location.hostname}/api`,
 });
 
 // Add a request interceptor
