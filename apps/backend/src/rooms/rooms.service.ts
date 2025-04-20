@@ -9,16 +9,46 @@ export class RoomsService {
     return this.prisma.room.create({ data: { patientName, doctorId } });
   }
 
-  findAll() {
+  findAll(query?: string, status?: string, dateRange?: { start: string; end: string }) {
     return this.prisma.room.findMany({
+      where: {
+        AND: [
+          status && status !== 'all'
+              ? { status }
+              : {},
+          query
+              ? {
+                OR: [
+                  { doctor: { name: { contains: query } } },
+                  { messages: { some: { content: { contains: query } } } },
+                  { patientName: { contains: query } },
+                ]
+              }
+              : {},
+          dateRange?.start && dateRange?.end
+              ? {
+                createdAt: {
+                  gte: new Date(dateRange.start),
+                  lte: new Date(dateRange.end),
+                },
+              }
+              : {},
+        ],
+      },
       orderBy: {
         createdAt: 'desc',
       },
-      include: { doctor: true, messages: { orderBy: { createdAt: 'desc' }, take: 1 } },
+      include: {
+        doctor: true,
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
     });
   }
 
-  async findAllByUserId(userId: number) {
+  async findAllByUserId(userId: number, query?: string, status?: string) {
     const doctor = await this.prisma.doctor.findUnique({
       where: { userId },
       select: { id: true },
@@ -31,10 +61,29 @@ export class RoomsService {
     return this.prisma.room.findMany({
       where: {
         doctorId: doctor.id,
+        AND: [
+          status && status !== 'all'
+              ? { status }
+              : {},
+
+          query
+              ? {
+                OR: [
+                  { patientName: { contains: query } },
+                  { messages: { some: { content: { contains: query } } } },
+                  { createdAt: { equals: new Date(query) } },
+                ],
+              }
+              : {},
+        ],
       },
       include: {
         doctor: true,
-        messages: true,
+        // patient: true,
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
       },
       orderBy: {
         createdAt: 'desc',

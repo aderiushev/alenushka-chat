@@ -26,14 +26,14 @@ let RoomsController = class RoomsController {
     create(body) {
         return this.roomsService.create(body.patientName, body.userId);
     }
-    async findAll(req) {
+    async findAll(req, query, status, dateRange) {
         const authHeader = req.headers['authorization'];
         const token = authHeader.split(' ')[1];
         const user = this.jwtService.verify(token);
         if (user.role === 'doctor') {
-            return this.roomsService.findAllByUserId(Number(user.sub));
+            return this.roomsService.findAllByUserId(Number(user.sub), query, status);
         }
-        return this.roomsService.findAll();
+        return this.roomsService.findAll(query, status, dateRange);
     }
     findOne(id) {
         return this.roomsService.findById(id);
@@ -53,12 +53,15 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], RoomsController.prototype, "create", null);
 __decorate([
+    (0, common_1.Get)(),
     (0, roles_decorator_1.Roles)('admin', 'doctor'),
     (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
-    (0, common_1.Get)(),
     __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)('query')),
+    __param(2, (0, common_1.Query)('status')),
+    __param(3, (0, common_1.Query)('dateRange')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Request]),
+    __metadata("design:paramtypes", [Request, String, String, Object]),
     __metadata("design:returntype", Promise)
 ], RoomsController.prototype, "findAll", null);
 __decorate([

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards, Param, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards, Param, Req, Query } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -16,20 +16,27 @@ export class RoomsController {
     return this.roomsService.create(body.patientName, body.userId);
   }
 
+  @Get()
   @Roles('admin', 'doctor')
   @UseGuards(RolesGuard)
-  @Get()
-  async findAll(@Req() req: Request) {
+  async findAll(
+    @Req() req: Request,
+    @Query('query') query?: string,
+    @Query('status') status?: string,
+    @Query('dateRange') dateRange?: {
+      start: string,
+      end: string,
+    }
+  ) {
     const authHeader = req.headers['authorization'];
     const token = authHeader.split(' ')[1];
-
     const user = this.jwtService.verify(token);
 
     if (user.role === 'doctor') {
-      return this.roomsService.findAllByUserId(Number(user.sub));
+      return this.roomsService.findAllByUserId(Number(user.sub), query, status);
     }
 
-    return this.roomsService.findAll();
+    return this.roomsService.findAll(query, status, dateRange);
   }
 
   @Get(':id')

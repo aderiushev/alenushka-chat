@@ -22,7 +22,7 @@ exports.AuthModule = AuthModule = __decorate([
         imports: [
             jwt_1.JwtModule.register({
                 secret: process.env.JWT_SECRET,
-                signOptions: { expiresIn: '1h' },
+                signOptions: { expiresIn: '7d' },
             }),
         ],
         providers: [auth_service_1.AuthService, jwt_service_1.JwtService, prisma_service_1.PrismaService, jwt_strategy_1.JwtStrategy],

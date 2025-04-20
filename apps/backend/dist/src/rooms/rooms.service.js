@@ -19,15 +19,45 @@ let RoomsService = class RoomsService {
     create(patientName, doctorId) {
         return this.prisma.room.create({ data: { patientName, doctorId } });
     }
-    findAll() {
+    findAll(query, status, dateRange) {
         return this.prisma.room.findMany({
+            where: {
+                AND: [
+                    status && status !== 'all'
+                        ? { status }
+                        : {},
+                    query
+                        ? {
+                            OR: [
+                                { doctor: { name: { contains: query } } },
+                                { messages: { some: { content: { contains: query } } } },
+                                { patientName: { contains: query } },
+                            ]
+                        }
+                        : {},
+                    (dateRange === null || dateRange === void 0 ? void 0 : dateRange.start) && (dateRange === null || dateRange === void 0 ? void 0 : dateRange.end)
+                        ? {
+                            createdAt: {
+                                gte: new Date(dateRange.start),
+                                lte: new Date(dateRange.end),
+                            },
+                        }
+                        : {},
+                ],
+            },
             orderBy: {
                 createdAt: 'desc',
             },
-            include: { doctor: true, messages: { orderBy: { createdAt: 'desc' }, take: 1 } },
+            include: {
+                doctor: true,
+                messages: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1,
+                },
+            },
         });
     }
-    async findAllByUserId(userId) {
+    async findAllByUserId(userId, query, status) {
         const doctor = await this.prisma.doctor.findUnique({
             where: { userId },
             select: { id: true },
@@ -38,10 +68,28 @@ let RoomsService = class RoomsService {
         return this.prisma.room.findMany({
             where: {
                 doctorId: doctor.id,
+                AND: [
+                    status && status !== 'all'
+                        ? { status }
+                        : {},
+                    query
+                        ? {
+                            OR: [
+                                { patientName: { contains: query } },
+                                { messages: { some: { content: { contains: query } } } },
+                                { createdAt: { equals: new Date(query) } },
+                            ],
+                        }
+                        : {},
+                ],
             },
             include: {
                 doctor: true,
-                messages: true,
+                // patient: true,
+                messages: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1,
+                },
             },
             orderBy: {
                 createdAt: 'desc',
