@@ -194,7 +194,7 @@ export default function Room() {
     const initRecording = async () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      mediaRecorderRef.current = new RecordRTC(stream, { type: 'audio', recorderType: StereoAudioRecorder, });
+      mediaRecorderRef.current = new RecordRTC(stream, { type: 'audio', recorderType: StereoAudioRecorder, mimeType: 'video/mp4' });
 
       // @ts-ignore
       window.mediaRecorderRef = mediaRecorderRef
