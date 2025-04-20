@@ -235,7 +235,9 @@ export default function Room() {
           // Play the audio
           audioElement.play();
 
-          const file = new File([blob], `voice-message.webm`);
+          const file = new File([blob], `voice-message.webm`, {
+            type: 'audio/webm',
+          });
 
           const formData = new FormData();
           formData.append('file', file);
