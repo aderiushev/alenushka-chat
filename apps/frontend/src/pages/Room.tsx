@@ -12,6 +12,7 @@ import {Avatar, Button, Checkbox, Link} from "@heroui/react";
 import messageSound from '../../public/sounds/new-message.mp3';
 import {useDoctor} from "@/hooks/useDoctor";
 import {useNavigationBlock} from "@/hooks/useNavigationBlock.ts";
+import moment from "moment";
 
 type IconProps = {
   width?: number;
@@ -420,10 +421,13 @@ export default function Room() {
           {messages.map((m) => (
             <div key={m.id} className={`border-b p-2 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, m) && 'bg-primary-50'}`}>
               <div className="flex gap-2 items-center">
-                {m.doctorId && (
-                  <Avatar src={m.doctor?.imageUrl} />
-                )}
-                <strong>{getSenderName(user, m, room)}:</strong>
+                <div className="flex-1 flex items-center">
+                  {m.doctorId && (
+                    <Avatar src={m.doctor?.imageUrl} />
+                  )}
+                  <strong>{getSenderName(user, m, room)}:</strong>
+                </div>
+                <span className="text-xs">{moment(m.createdAt).format('DD.MM.YYYY HH:mm')}</span>
               </div>
 
               {m.type === 'TEXT' && (
@@ -479,15 +483,15 @@ export default function Room() {
               <p>3. коррекции ранее назначенного лечения при условии установления  диагноза и назначения лечения на очном приеме (осмотре, консультации).</p>
             </div>
             <div className="mt-4">
-              <div>
-                <Checkbox onChange={() => handleChangeAgree(1)} />Я согласен на <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/soglasie-na-chat-perepisku.docx">обработку персональных данных</Link>. С <Link target="_blank" href="https://alenushka-pediatr.ru/personal-data-agreement"> Политикой конфиденциальности и защиты персональных данных</Link> ознакомлен.
-              </div>
-              <div>
-                <Checkbox onChange={() => handleChangeAgree(2)} />С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/dogovor-oferta-na-distkonsultaciu.docx">Договором-офертой</Link> на возмездное оказание медицинских услуг с использованием дистанционного взаимодействия ознакомлен.
-              </div>
-              <div>
-                <Checkbox onChange={() => handleChangeAgree(3)} />С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/ids-na-chatperepisku.docx">Информированным добровольным согласием</Link> на проведение дистанционной консультации врача-специалиста ознакомлен.
-              </div>
+              <Checkbox onChange={() => handleChangeAgree(1)} classNames={{ hiddenInput: 'z-[0]' }}>
+                Я согласен на <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/soglasie-na-chat-perepisku.pdf">обработку персональных данных</Link>. С <Link target="_blank" href="https://alenushka-pediatr.ru/personal-data-agreement"> Политикой конфиденциальности и защиты персональных данных</Link> ознакомлен.
+              </Checkbox>
+              <Checkbox onChange={() => handleChangeAgree(2)} classNames={{ hiddenInput: 'z-[0]' }}>
+                С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/dogovor-oferta-na-distkonsultaciu.pdf">Договором-офертой</Link> на возмездное оказание медицинских услуг с использованием дистанционного взаимодействия ознакомлен.
+              </Checkbox>
+              <Checkbox onChange={() => handleChangeAgree(3)} classNames={{ hiddenInput: 'z-[0]' }}>
+                С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/ids-na-chatperepisku.pdf"> Информированным добровольным согласием</Link> на проведение дистанционной консультации врача-специалиста ознакомлен.
+              </Checkbox>
             </div>
             <div className="mt-4 flex justify-center">
               <Button color={isAgree ? "primary" : "default"} onPress={handleSubmitAgree} disabled={!isAgree}>Согласен</Button>
