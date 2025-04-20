@@ -9,16 +9,16 @@ const Header = ()=>  {
   const onLogout = () => {
     if (user) {
       logout();
-      navigate('/login')
+      navigate('/')
     }
   }
 
   return (
     <Navbar
-        className="p-2 flex"
-        // @ts-ignore
-        style={{ '--navbar-height': 'auto' }}
-        classNames={{ wrapper: "flex flex-col sm:flex-row" }}
+      className="p-2 flex"
+      // @ts-ignore
+      style={{ '--navbar-height': 'auto' }}
+      classNames={{ wrapper: "flex flex-col sm:flex-row max-w-none" }}
     >
       <NavbarBrand className="gap-2 flex-col sm:flex-row">
         {user && (

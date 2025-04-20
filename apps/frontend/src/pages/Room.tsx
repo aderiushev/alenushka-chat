@@ -87,11 +87,11 @@ export default function Room() {
 
   useEffect(() => {
     if (room && doctorId && !user) {
-      navigate(`/login?roomId=${room.id}`);
+      navigate(`/?roomId=${room.id}`);
     }
 
     if (room && user && doctorId && Number(doctorId) !== user.doctorId && user.role !== 'admin') {
-      navigate(`/login?roomId=${room.id}`);
+      navigate(`/?roomId=${room.id}`);
     }
   }, [doctorId, user, room]);
 
