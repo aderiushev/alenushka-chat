@@ -145,7 +145,9 @@ export default function Room() {
 
   const handleStartRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mediaRecorder = new MediaRecorder(stream);
+    const mediaRecorder = new MediaRecorder(stream, {
+      mimeType: 'audio/mp4',
+    });
     const audioChunks: Blob[] = [];
 
     mediaRecorderRef.current = mediaRecorder;
@@ -153,7 +155,7 @@ export default function Room() {
       audioChunks.push(event.data);
     };
     mediaRecorder.onstop = async () => {
-      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      const audioBlob = new Blob(audioChunks, { type: 'audio/mp4' });
       const file = new File([audioBlob], 'voice-message.webm');
 
       const formData = new FormData();
