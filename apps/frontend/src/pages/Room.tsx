@@ -77,7 +77,7 @@ export default function Room() {
     2: false,
     3: false
   })
-  const [isAgreed, setIsAgreed] = useState<boolean>(localStorage.getItem('isAgreed'));
+  const [isAgreed, setIsAgreed] = useState<boolean>(!!localStorage.getItem('isAgreed'));
 
   useNavigationBlock(textareaRef);
 
