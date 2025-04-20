@@ -26,7 +26,7 @@ const Header = ()=>  {
             {user.doctor? user.doctor.name : user.email}
           </h3>
         )}
-        <Link href="/login">Алёнушка :: Онлайн-консультации</Link>
+        <Link href="/">Алёнушка :: Онлайн-консультации</Link>
       </NavbarBrand>
       {user && (
         <NavbarContent className="flex gap-4 flex-col sm:flex-row" justify="center">

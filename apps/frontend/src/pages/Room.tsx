@@ -101,7 +101,6 @@ export default function Room() {
 
   useEffect(() => {
     scrollToBottom();
-
   }, []);
 
   useEffect(() => {
@@ -146,53 +145,8 @@ export default function Room() {
     }
   }, [text]);
 
-
-  // const handleStartRecording = async () => {
-  //   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  //
-  //   const mimeType = MediaRecorder.isTypeSupported('audio/mp4')
-  //       ? 'audio/mp4'
-  //       : MediaRecorder.isTypeSupported('audio/webm')
-  //           ? 'audio/webm'
-  //           : '';
-  //
-  //   const mediaRecorder = new MediaRecorder(stream, {
-  //     mimeType
-  //   });
-  //   const audioChunks: Blob[] = [];
-  //
-  //   mediaRecorderRef.current = mediaRecorder;
-  //   mediaRecorder.ondataavailable = (event) => {
-  //     audioChunks.push(event.data);
-  //   };
-  //   mediaRecorder.onstop = async () => {
-  //     const audioBlob = new Blob(audioChunks, { type:mimeType });
-  //     const file = new File([audioBlob], 'voice-message.webm');
-  //
-  //     const formData = new FormData();
-  //     formData.append('file', file);
-  //
-  //     const res = await api.post('/upload/file', formData);
-  //     const url = res.data.url;
-  //
-  //     if (id) {
-  //       sendMessage({ roomId: id, doctorId: doctor ? doctor.id : undefined, type: 'AUDIO', content: url });
-  //     }
-  //   };
-  //
-  //   mediaRecorder.start();
-  //   setIsRecording(true);
-  // };
-
-  // const handleStopRecording = () => {
-  //   if (mediaRecorderRef.current) {
-  //     mediaRecorderRef.current.stop();
-  //     setIsRecording(false);
-  //   }
-  // };
-
   const handleStartRecording = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     mediaRecorderRef.current = new RecordRTC(stream, {
       type: 'audio'
     });
@@ -220,7 +174,7 @@ export default function Room() {
           if (id) {
             sendMessage({
               roomId: id,
-              doctorId: doctor ? doctor.id : undefined,
+              doctorId: user ? user.doctor?.id : undefined,
               type: 'AUDIO',
               content: url,
             });
@@ -262,7 +216,7 @@ export default function Room() {
     const url = res.data.url;
 
     const type = file.type.startsWith('image/') ? 'IMAGE' : 'FILE';
-    sendMessage({ roomId: id, doctorId: doctor ? doctor.id : undefined, type, content: url });
+    sendMessage({ roomId: id, doctorId: user ? user.doctor?.id : undefined, type, content: url });
   };
 
   const handleTyping = () => {
@@ -419,9 +373,9 @@ export default function Room() {
         {isReady ? (
           <div className="flex-1 overflow-y-auto gap-1 flex flex-col px-4 pt-4">
           {messages.map((m) => (
-            <div key={m.id} className={`border-b p-2 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, m) && 'bg-primary-50'}`}>
+            <div id={m.id} key={m.id} className={`border-b p-2 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, m) && 'bg-primary-50'}`}>
               <div className="flex gap-2 items-center">
-                <div className="flex-1 flex items-center">
+                <div className="flex-1 flex items-center gap-1">
                   {m.doctorId && (
                     <Avatar src={m.doctor?.imageUrl} />
                   )}
@@ -478,11 +432,11 @@ export default function Room() {
             <h1 className="text-xl text-primary">Соглашение</h1>
             <p>Я согласен на онлайн-консультацию и понимаю, что она проводится <strong>БЕЗ ОСМОТРА ПАЦИЕНТА ВРАЧОМ</strong> в целях:</p>
             <div>
-              <p>1. профилактики, сбора, анализа жалоб пациента и данных анамнеза, оценки эффективности лечебно-диагностических мероприятий, медицинского наблюдения за состоянием здоровья пациента;</p>
-              <p>2. принятия решения о необходимости проведения очного приема (осмотра, консультации);</p>
+              <p>1. сбора, анализа жалоб пациента и данных анамнеза, оценки эффективности лечебно-диагностических мероприятий, медицинского наблюдения за состоянием здоровья пациента, профилактики;</p>
+              <p>2. принятия решения о необходимости проведения очного приема (осмотра, консультации) или госпитализации пациента;</p>
               <p>3. коррекции ранее назначенного лечения при условии установления  диагноза и назначения лечения на очном приеме (осмотре, консультации).</p>
             </div>
-            <div className="mt-4">
+            <div className="mt-2">
               <Checkbox onChange={() => handleChangeAgree(1)} classNames={{ hiddenInput: 'z-[0]' }}>
                 Я согласен на <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/soglasie-na-chat-perepisku.pdf">обработку персональных данных</Link>. С <Link target="_blank" href="https://alenushka-pediatr.ru/personal-data-agreement"> Политикой конфиденциальности и защиты персональных данных</Link> ознакомлен.
               </Checkbox>
@@ -492,6 +446,8 @@ export default function Room() {
               <Checkbox onChange={() => handleChangeAgree(3)} classNames={{ hiddenInput: 'z-[0]' }}>
                 С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/ids-na-chatperepisku.pdf"> Информированным добровольным согласием</Link> на проведение дистанционной консультации врача-специалиста ознакомлен.
               </Checkbox>
+
+              <p className="mt-2">Клиника Алёнушка</p>
             </div>
             <div className="mt-4 flex justify-center">
               <Button color={isAgree ? "primary" : "default"} onPress={handleSubmitAgree} disabled={!isAgree}>Согласен</Button>
