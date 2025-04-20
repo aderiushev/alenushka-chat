@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import RecordRTC, {StereoAudioRecorder} from 'recordrtc';
+import RecordRTC from 'recordrtc';
 import { useSearchParams } from 'react-router-dom';
 import { useSocketStore } from '../store/socketStore';
 import { api } from '../api';
@@ -194,7 +194,7 @@ export default function Room() {
     const initRecording = async () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      mediaRecorderRef.current = new RecordRTC(stream, { type: 'audio', recorderType: StereoAudioRecorder, mimeType: 'video/mp4' });
+      mediaRecorderRef.current = new RecordRTC(stream, { type: 'audio' });
 
       // @ts-ignore
       window.mediaRecorderRef = mediaRecorderRef
@@ -223,7 +223,7 @@ export default function Room() {
       mediaRecorderRef.current.stopRecording(async () => {
         if (mediaRecorderRef.current) {
           const blob = mediaRecorderRef.current.getBlob();
-          const file = new File([blob], `voice-message.mp4`, { type: 'audio/aac4' });
+          const file = new File([blob], `voice-message.webm`);
 
           const formData = new FormData();
           formData.append('file', file);
@@ -389,6 +389,8 @@ export default function Room() {
   const isCanEdit = isReady && (!user || user.role !== 'admin');
   const isAgree = Object.values(agree).every((item) => item)
 
+  console.log('debug msg', messages)
+
   return (
     <div className="flex gap-1 flex-1">
       <div className="flex flex-col flex-1">
@@ -469,11 +471,8 @@ export default function Room() {
               )}
 
               {m.type === 'AUDIO' && (
-                  <>
                 <audio controls src={m.content} className="mt-1" />
-                <audio controls src={"https://storage.googleapis.com/alenushka-chat-eaa6a.firebasestorage.app/6bb4f5ac-e2dd-41b2-bd8e-4524e579c5ad-voice-message.webm"} className="mt-1" />
-                </>
-                )}
+              )}
             </div>
           ))}
           <div className="min-h-[20px] flex">
