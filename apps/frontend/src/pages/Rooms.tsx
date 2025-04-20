@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import _ from 'lodash';
+import {today, getLocalTimeZone, ZonedDateTime, CalendarDate, DateValue} from "@internationalized/date";
 import { api } from "../api";
 import {
   Button,
@@ -8,22 +10,32 @@ import {
   CardFooter, Chip,
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger, RangeCalendar, RangeValue, Select, SelectItem,
 } from "@heroui/react";
 import Header from "@/components/Header.tsx";
 import {useUser} from "@/hooks/useUser.ts";
+import {Input} from "@heroui/input";
+import moment from "moment";
+
+const FILTER_ITEMS = [
+  { label: 'Все', value: 'all' },
+  { label: 'Активные', value: 'active' },
+  { label: 'Завершенные', value: 'completed' }
+]
 
 export default function Rooms() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const { isLoading, user } = useUser();
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState('all');
+  const [dateRange, setDateRange] = useState<RangeValue<DateValue>>({
+    start: today(getLocalTimeZone()).subtract({ weeks: 1 }),
+    end: today(getLocalTimeZone()).add({ weeks: 1 })
+  });
 
   useEffect(() => {
-    const f = async () => {
-      const response = await api.get('/rooms')
-      setRooms(response.data)
-    }
-
-    f()
+    // @ts-ignore
+    fetchRooms(query, status, dateRange);
   }, []);
 
   const onCopyDoctorLink = (id: string, doctorId: number) => {
@@ -34,10 +46,42 @@ export default function Rooms() {
     navigator.clipboard.writeText(`${window.location.origin}/room/${id}`)
   }
 
+  const fetchRooms = async (query?: string, status?: string, dateRange?: RangeValue<ZonedDateTime>) => {
+    const response = await api.get('/rooms', {
+      params: { query, status, dateRange },
+    });
+    setRooms(response.data);
+  };
+
+  const debouncedFetchRooms = useCallback(
+    _.debounce((query: string, status: string, dateRange) => {
+      fetchRooms(query, status, dateRange);
+    }, 500),
+    []
+  );
+
+  const handleOnSearchChange = (value: string) => {
+    setQuery(value);
+    debouncedFetchRooms(value, status, dateRange);
+  };
+
+  const handleOnStatusChange = (value: string) => {
+    setStatus(value);
+    debouncedFetchRooms(query, value, dateRange);
+  };
+
+  const handleOnDateRangeChange = (value: RangeValue<CalendarDate>) => {
+    setDateRange(value);
+    debouncedFetchRooms(query, status, value);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col flex-1">
       <Header />
-      <div className="flex sm:items-start justify-center overflow-y-auto">
+
+      <div className="flex gap-2">
+        <div className="flex sm:items-start overflow-y-auto flex-col flex-1">
+        <p className="px-4 text-xl font-semibold">Консультации</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6 p-4 w-full overflow-y-auto">
           {rooms.length ? rooms.map((room) => (
             <Link to={`/room/${room.id}`} key={room.id}>
@@ -101,12 +145,12 @@ export default function Rooms() {
                   )}
                   <div className="flex gap-1 flex-col items-center justify-center">
                     <p className="truncate gap-1 flex">
-                      <span>Дата создания:</span><span>{new Date(room.createdAt).toLocaleDateString()}</span>
+                      <span>Дата создания:</span><span>{moment(room.createdAt).format('DD.MM.YYYY')}</span>
                     </p>
-                    <p className="truncate gap-1 flex">
+                    <div className="truncate gap-1 flex">
                       <span>Статус:</span>
                       <Chip className="text-white" size="sm" color={room.status === 'active' ? 'success' : 'danger'}>{room.status === 'active' ? 'Активна' : 'Завершена'}</Chip>
-                    </p>
+                    </div>
                   </div>
                 </CardFooter>
               </Card>
@@ -116,6 +160,35 @@ export default function Rooms() {
               <h3>У вас пока не было консультаций</h3>
             </div>
           )}
+        </div>
+      </div>
+
+        <div className="m-4 flex flex-col gap-1">
+            <Input
+              value={query}
+              placeholder="Поиск ..."
+              size="lg"
+              color="primary"
+              isClearable
+              onClear={() => handleOnSearchChange('')}
+              onChange={(e) => handleOnSearchChange(e.target.value)}
+            />
+            <Select
+              color="primary"
+              label="Статус"
+              size="sm"
+              value={status}
+              placeholder="Выберите статус"
+              items={FILTER_ITEMS}
+              onChange={(e) => handleOnStatusChange(e.target.value)}
+            >
+              {(item) => <SelectItem key={item.value} >{item.label}</SelectItem>}
+            </Select>
+            <RangeCalendar
+              // @ts-ignore
+              value={dateRange}
+              onChange={handleOnDateRangeChange}
+            />
         </div>
       </div>
     </div>
