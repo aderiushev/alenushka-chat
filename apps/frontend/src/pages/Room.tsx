@@ -491,14 +491,11 @@ export default function Room() {
               )}
 
               {m.type === 'AUDIO' && (
-                <>
-                  <div>current</div>
-                  <audio controls src={m.content} className="mt-1" />
-                  <div>not working on ios</div>
-                  <audio controls src="https://storage.googleapis.com/alenushka-chat-eaa6a.firebasestorage.app/4d9badf3-bc4c-49e2-b2b1-fc6cc53b7599-voice-message.webm" className="mt-1" />
-                  <div>works</div>
-                  <audio controls src="https://storage.googleapis.com/alenushka-chat-eaa6a.firebasestorage.app/676d0b4a-6c91-446a-a87b-05a319ad5f56-voice-message.webm" className="mt-1" />
-                </>
+                <audio controls className="mt-1">
+                  <source src={m.content} type="audio/mpeg" />
+                  <source src={m.content} type="audio/ogg" />
+                  <source src={m.content} type="audio/webm" />
+                </audio>
               )}
             </div>
           ))}
