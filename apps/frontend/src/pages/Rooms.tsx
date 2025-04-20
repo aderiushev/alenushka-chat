@@ -37,8 +37,8 @@ export default function Rooms() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="flex sm:items-start justify-center">
-        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6 p-4 w-full">
+      <div className="flex sm:items-start justify-center overflow-y-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6 p-4 w-full overflow-y-auto">
           {rooms.length ? rooms.map((room) => (
             <Link to={`/room/${room.id}`} key={room.id}>
               <Card>

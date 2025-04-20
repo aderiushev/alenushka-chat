@@ -20,7 +20,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       existingSocket.disconnect();
     }
 
-    const socket = io(process.env.NODE_ENV === 'development' ? 'http://localhost:4001' : `${window.location.protocol}//${window.location.hostname}`, {
+    const socket = io(process.env.NODE_ENV === 'development' ? 'https://localhost:4001' : `${window.location.protocol}//${window.location.hostname}`, {
       query: {
         token,
       },

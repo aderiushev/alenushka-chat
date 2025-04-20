@@ -20,7 +20,7 @@ declare global {
   type Message = {
     id: string;
     userId?: number;
-    type: 'TEXT' | 'IMAGE' | 'FILE';
+    type: 'TEXT' | 'IMAGE' | 'FILE' | 'AUDIO';
     content: string;
     createdAt: string;
     roomId: string;

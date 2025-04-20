@@ -6,7 +6,7 @@ import { api } from '../api';
 import {useUser} from "../hooks/useUser";
 import {useRoom} from "../hooks/useRoom";
 import {Textarea} from "@heroui/input";
-import {Avatar, Button, Link} from "@heroui/react";
+import {Avatar, Button, Checkbox, Link} from "@heroui/react";
 // @ts-ignore
 import messageSound from '../../public/sounds/new-message.mp3';
 import {useDoctor} from "@/hooks/useDoctor";
@@ -36,6 +36,18 @@ const CloseIcon = (props: IconProps) => (
   </svg>
 );
 
+const StartRecordingIcon = (props: IconProps) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" {...props}>
+    <path d="M192 0c-53 0-96 43-96 96v160c0 53 43 96 96 96s96-43 96-96V96c0-53-43-96-96-96M64 216c0-13.3-10.7-24-24-24s-24 10.7-24 24v40c0 89.1 66.2 162.7 152 174.4V464h-48c-13.3 0-24 10.7-24 24s10.7 24 24 24h144c13.3 0 24-10.7 24-24s-10.7-24-24-24h-48v-33.6c85.8-11.7 152-85.3 152-174.4v-40c0-13.3-10.7-24-24-24s-24 10.7-24 24v40c0 70.7-57.3 128-128 128S64 326.7 64 256z"></path>
+  </svg>
+);
+
+const StopRecordingIcon = (props: IconProps) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" {...props}>
+    <path d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512m-64-352h128c17.7 0 32 14.3 32 32v128c0 17.7-14.3 32-32 32H192c-17.7 0-32-14.3-32-32V192c0-17.7 14.3-32 32-32"></path>
+  </svg>
+);
+
 export default function Room() {
   const { id } = useParams();
   const connect = useSocketStore((s) => s.connect);
@@ -54,10 +66,18 @@ export default function Room() {
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const { user } = useUser();
   const { room, refetch } = useRoom(id);
   const { doctor } = useDoctor(room?.doctorId);
   const navigate = useNavigate();
+  const [agree, setAgree] = useState<Record<number, boolean>>({
+    1: false,
+    2: false,
+    3: false
+  })
+  const [isAgreed, setIsAgreed] = useState<boolean>(localStorage.getItem('isAgreed'));
 
   useNavigationBlock(textareaRef);
 
@@ -74,6 +94,11 @@ export default function Room() {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    scrollToBottom();
+
+  }, []);
 
   useEffect(() => {
     if (id) connect(id);
@@ -116,6 +141,54 @@ export default function Room() {
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [text]);
+
+
+  const handleStartRecording = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mediaRecorder = new MediaRecorder(stream);
+    const audioChunks: Blob[] = [];
+
+    mediaRecorderRef.current = mediaRecorder;
+    mediaRecorder.ondataavailable = (event) => {
+      audioChunks.push(event.data);
+    };
+    mediaRecorder.onstop = async () => {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      const file = new File([audioBlob], 'voice-message.webm');
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await api.post('/upload/file', formData);
+      const url = res.data.url;
+
+      if (id) {
+        sendMessage({ roomId: id, doctorId: doctor ? doctor.id : undefined, type: 'AUDIO', content: url });
+      }
+    };
+
+    mediaRecorder.start();
+    setIsRecording(true);
+  };
+
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const handleChangeAgree = (id: number) => {
+    setAgree((state) => ({
+      ...state,
+      [id]: !state[id],
+    }));
+  };
+
+  const handleSubmitAgree = () => {
+    localStorage.setItem('isAgreed', '1')
+    setIsAgreed(true);
+  }
 
   const handleSend = () => {
     if (!text.trim() || !id) return;
@@ -243,100 +316,148 @@ export default function Room() {
   const isPatientConnected = ((typeof socket?.id === 'string' || typeof socket?.id === 'number') && onlineUsers.includes(socket.id))
       || (onlineUsers.length > 1 && onlineUsers.includes(room.doctor.userId));
 
+  const isReady = !!user || isAgreed;
   const isCanEnd = user && (user.role === 'admin' || user.id === room.doctor.userId);
-  const isCanEdit = !user || user.role !== 'admin';
+  const isCanEdit = isReady && (!user || user.role !== 'admin');
+  const isAgree = Object.values(agree).every((item) => item)
 
   return (
-      <div className="flex gap-1">
-        <div className="flex flex-col h-screen flex-1">
-          <div className="p-4 border-b bg-white shadow z-10">
-            <div className="flex flex-col gap-1">
-              <div className="flex gap-2 flex-col">
-                <div className="gap-2 flex justify-between flex-col sm:flex-row flex-1">
+    <div className="flex gap-1 flex-1">
+      <div className="flex flex-col flex-1">
+        <div className="p-4 border-b bg-white shadow z-10">
+          <div className="flex flex-col gap-1">
+            <div className="flex gap-2 flex-col">
+              <div className="gap-2 flex justify-between flex-col sm:flex-row flex-1">
+                <div className="flex justify-between items-center gap-2">
                   {user && (
-                    <Link href="/rooms">Назад к списку</Link>
+                    <Link href="/rooms">Назад</Link>
                   )}
                   <span className="text-center text-xl font-semibold">Он-лайн консультация</span>
-                  <span className="flex flex-col gap-1 sm:flex-row">
-                    <span className="flex items-center gap-1">
-                      <span className={`flex w-3 h-3 rounded-full ${isPatientConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-                      <span>{user ? room.patientName : 'Вы'}</span>
-                    </span>
-                    {isCanEdit && (
-                      <span className="flex items-center gap-1">
-                        <span className={`flex w-3 h-3 rounded-full ${onlineUsers.includes(room.doctor.userId) ? 'bg-green-500' : 'bg-red-500'}`} />
-                        <span>{user ? `Вы` : room.doctor.name}</span>
-                      </span>
-                    )}
-                  </span>
                 </div>
-                {doctor && (
-                  <div className="flex gap-2 items-center">
-                    <Avatar className="w-[80px] h-[80px]" src={doctor.imageUrl} />
-                    <div className="flex flex-col gap-0.5">
-                      <div className="text-xs">{doctor.name}</div>
-                      <div className="text-xs">{doctor.description}</div>
-                      <Link className="text-xs" target="_blank" href={doctor.externalUrl}>Описание</Link>
-                    </div>
-                  </div>
-                )}
+
+                <span className="flex flex-col gap-1 sm:flex-row">
+                  <span className="flex items-center gap-1">
+                    <span className={`flex w-3 h-3 rounded-full ${isPatientConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <span>{user ? room.patientName : 'Вы'}</span>
+                  </span>
+                  {isCanEdit && (
+                    <span className="flex items-center gap-1">
+                      <span className={`flex w-3 h-3 rounded-full ${onlineUsers.includes(room.doctor.userId) ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <span>{user ? `Вы` : room.doctor.name}</span>
+                    </span>
+                  )}
+                </span>
               </div>
+              {doctor && (
+                <div className="flex gap-2 items-center">
+                  <Avatar className="w-[60px] h-[60px]" src={doctor.imageUrl} />
+                  <div className="flex flex-col gap-0.5">
+                    <div className="text-xs">{doctor.name}</div>
+                    <div className="text-xs">{doctor.description}</div>
+                    <Link className="text-xs" target="_blank" href={doctor.externalUrl}>Описание</Link>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
+        </div>
 
-          <div className="flex-1 overflow-y-auto gap-1 flex flex-col px-4 bg-gray-50">
-            {messages.map((m) => (
-              <div key={m.id} className={`border-b p-2 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, m) && 'bg-primary-50'}`}>
-                <div className="flex gap-2 items-center">
-                  {m.doctorId && (
-                    <Avatar src={m.doctor?.imageUrl} />
-                  )}
-                  <strong>{getSenderName(user, m, room)}:</strong>
-                </div>
+        {isReady ? (
+          <div className="flex-1 overflow-y-auto gap-1 flex flex-col px-4 pt-4">
+          {messages.map((m) => (
+            <div key={m.id} className={`border-b p-2 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, m) && 'bg-primary-50'}`}>
+              <div className="flex gap-2 items-center">
+                {m.doctorId && (
+                  <Avatar src={m.doctor?.imageUrl} />
+                )}
+                <strong>{getSenderName(user, m, room)}:</strong>
+              </div>
 
-                {m.type === 'TEXT' && (
-                  <div className="whitespace-pre-wrap">{m.content}</div>
-                )}
-                {m.type === 'IMAGE' && (
-                  <>
-                    <img src={m.content} className="w-32 mt-1" alt="uploaded" />
-                    <Link
-                      href={m.content}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-blue-600 underline"
-                    >
-                      Открыть
-                    </Link>
-                  </>
-                )}
-                {m.type === 'FILE' && (
+              {m.type === 'TEXT' && (
+                <div className="whitespace-pre-wrap">{m.content}</div>
+              )}
+              {m.type === 'IMAGE' && (
+                <>
+                  <img src={m.content} className="w-32 mt-1" alt="uploaded" />
                   <Link
                     href={m.content}
                     target="_blank"
                     rel="noreferrer"
                     className="text-blue-600 underline"
                   >
-                    Скачать файл
+                    Открыть
                   </Link>
-                )}
-              </div>
-            ))}
-            <div className="min-h-[20px] flex">
-              {isTyping && (
-                <span className="text-sm text-gray-500">Пользователь печатает...</span>
+                </>
+              )}
+              {m.type === 'FILE' && (
+                <Link
+                  href={m.content}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-600 underline"
+                >
+                  Скачать файл
+                </Link>
+              )}
+
+              {m.type === 'AUDIO' && (
+                <audio controls src={m.content} className="mt-1" />
               )}
             </div>
-            <div ref={messagesEndRef} />
+          ))}
+          <div className="min-h-[20px] flex">
+            {isTyping && (
+              <span className="text-sm text-gray-500">Пользователь печатает...</span>
+            )}
           </div>
+          <div ref={messagesEndRef} className="h-0" />
+        </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto gap-1 flex flex-col p-4 bg-white">
+            <h1 className="text-xl text-primary">Соглашение</h1>
+            <p>Я согласен на онлайн-консультацию и понимаю, что она проводится <strong>БЕЗ ОСМОТРА ПАЦИЕНТА ВРАЧОМ</strong> в целях:</p>
+            <div>
+              <p>1. профилактики, сбора, анализа жалоб пациента и данных анамнеза, оценки эффективности лечебно-диагностических мероприятий, медицинского наблюдения за состоянием здоровья пациента;</p>
+              <p>2. принятия решения о необходимости проведения очного приема (осмотра, консультации);</p>
+              <p>3. коррекции ранее назначенного лечения при условии установления  диагноза и назначения лечения на очном приеме (осмотре, консультации).</p>
+            </div>
+            <div className="mt-4">
+              <div>
+                <Checkbox onChange={() => handleChangeAgree(1)} />Я согласен на <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/soglasie-na-chat-perepisku.docx">обработку персональных данных</Link>. С <Link target="_blank" href="https://alenushka-pediatr.ru/personal-data-agreement"> Политикой конфиденциальности и защиты персональных данных</Link> ознакомлен.
+              </div>
+              <div>
+                <Checkbox onChange={() => handleChangeAgree(2)} />С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/dogovor-oferta-na-distkonsultaciu.docx">Договором-офертой</Link> на возмездное оказание медицинских услуг с использованием дистанционного взаимодействия ознакомлен.
+              </div>
+              <div>
+                <Checkbox onChange={() => handleChangeAgree(3)} />С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/ids-na-chatperepisku.docx">Информированным добровольным согласием</Link> на проведение дистанционной консультации врача-специалиста ознакомлен.
+              </div>
+            </div>
+            <div className="mt-4 flex justify-center">
+              <Button color={isAgree ? "primary" : "default"} onPress={handleSubmitAgree} disabled={!isAgree}>Согласен</Button>
+            </div>
+          </div>
+        )}
 
-          {isCanEdit && (
-              <>
-
+        {isCanEdit && (
+          <>
             {room && room.status === 'active' ? (
-              <div className="p-4 border-t bg-white flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <div className="flex flex-row items-start sm:items-center gap-2 p-2 border-t-1">
+                <input
+                    type="file"
+                    id="file"
+                    accept="*/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                />
+                <label
+                  htmlFor="file"
+                  className="min-w-[40px] min-h-[40px] flex items-center justify-center whitespace-nowrap cursor-pointer bg-blue-600 text-white rounded-[12px] hover:bg-blue-500 transition"
+                >
+                  <FileIcon width={20} height={20} fill="#fff" />
+                </label>
+
                 <Textarea
-                  classNames={{ input: "max-h-[200px]" }}
+                  classNames={{ input: "max-h-[200px]", inputWrapper: "rounded-none" }}
                   ref={textareaRef}
                   value={text}
                   onChange={(e) => {
@@ -349,31 +470,22 @@ export default function Room() {
                       handleSend();
                     }
                   }}
-                  rows={3}
+                  rows={4}
                   placeholder="Введите сообщение"
+                  size="lg"
+                  disableAutosize
                 />
 
-                  <div className="flex gap-2 justify-end w-full md:w-auto">
-                    <Button
-                      isIconOnly
-                      color="primary"
-                      onPress={handleSend}
-                    >
-                      <SendIcon width={20} height={20} fill="#fff" />
-                    </Button>
-
-                    <input
-                      type="file"
-                      id="file"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor="file"
-                      className="w-[40px] h-[40px] flex items-center justify-center whitespace-nowrap cursor-pointer bg-blue-600 text-white rounded-[12px] hover:bg-blue-500 transition"
-                    >
-                      <FileIcon width={20} height={20} fill="#fff" />
-                    </label>
+                  <div className="flex gap-2 justify-end w-auto">
+                    {textareaRef.current?.value && (
+                      <Button
+                        isIconOnly
+                        color="primary"
+                        onPress={handleSend}
+                      >
+                        <SendIcon width={20} height={20} fill="#fff" />
+                      </Button>
+                    )}
 
                     {isCanEnd && (
                       <Button
@@ -384,15 +496,26 @@ export default function Room() {
                         <CloseIcon width={20} height={20} fill="#fff" />
                       </Button>
                     )}
+
+                    {isRecording ? (
+                      <Button color="danger" isIconOnly onPress={handleStopRecording}>
+                        <StopRecordingIcon width={20} height={20} fill="#fff" />
+                      </Button>
+                    ) : (
+                      <Button color="warning" isIconOnly onPress={handleStartRecording}>
+                        <StartRecordingIcon width={20} height={20} fill="#fff" />
+                      </Button>
+                    )}
                   </div>
               </div>
             ) : (
               <div className="p-4 border-t bg-white flex flex-col sm:flex-row justify-center gap-2">
-                  <p className="text-center">Консультация завершена</p>
+                <p className="text-center">Консультация завершена</p>
               </div>
             )}
-          </>)}
-        </div>
+          </>
+        )}
       </div>
+    </div>
   );
 }

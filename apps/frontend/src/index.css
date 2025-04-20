@@ -9,9 +9,27 @@ html, body {
 
 body {
   @apply bg-gray-100 !important;
+  overflow: hidden;
+  position: fixed;
+  left: 0;
+  right: 0;
+  display: flex;
+}
+
+#root {
+  display: flex;
+  flex: 1;
+}
+
+.hero-provider {
+  display: flex;
+  flex: 1;
+  /*justify-content: center;*/
+  /*align-items: center;*/
 }
 
 
 input::file-selector-button {
   display: block;
 }
+

@@ -5,7 +5,7 @@ export default function AppLayout() {
   const navigate = useNavigate();
 
   return (
-      <HeroUIProvider navigate={navigate} useHref={useHref}>
+      <HeroUIProvider navigate={navigate} useHref={useHref} className="hero-provider">
         <Outlet />
       </HeroUIProvider>
   );
