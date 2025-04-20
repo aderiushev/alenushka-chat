@@ -481,6 +481,8 @@ export default function Room() {
 
               {m.type === 'AUDIO' && (
                 <>
+                  <div>current</div>
+                  <audio controls src={m.content} className="mt-1" />
                   <div>not working on ios</div>
                   <audio controls src="https://storage.googleapis.com/alenushka-chat-eaa6a.firebasestorage.app/4d9badf3-bc4c-49e2-b2b1-fc6cc53b7599-voice-message.webm" className="mt-1" />
                   <div>works</div>
