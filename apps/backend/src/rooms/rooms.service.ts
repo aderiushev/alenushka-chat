@@ -48,7 +48,7 @@ export class RoomsService {
     });
   }
 
-  async findAllByUserId(userId: number, query?: string, status?: string) {
+  async findAllByUserId(userId: number, query?: string, status?: string, dateRange?: { start: string; end: string }) {
     const doctor = await this.prisma.doctor.findUnique({
       where: { userId },
       select: { id: true },
@@ -71,8 +71,15 @@ export class RoomsService {
                 OR: [
                   { patientName: { contains: query } },
                   { messages: { some: { content: { contains: query } } } },
-                  { createdAt: { equals: new Date(query) } },
                 ],
+              }
+              : {},
+          dateRange?.start && dateRange?.end
+              ? {
+                createdAt: {
+                  gte: new Date(dateRange.start),
+                  lte: new Date(dateRange.end),
+                },
               }
               : {},
         ],

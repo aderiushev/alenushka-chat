@@ -31,7 +31,7 @@ let RoomsController = class RoomsController {
         const token = authHeader.split(' ')[1];
         const user = this.jwtService.verify(token);
         if (user.role === 'doctor') {
-            return this.roomsService.findAllByUserId(Number(user.sub), query, status);
+            return this.roomsService.findAllByUserId(Number(user.sub), query, status, dateRange);
         }
         return this.roomsService.findAll(query, status, dateRange);
     }
