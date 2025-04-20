@@ -11,7 +11,7 @@ export class UploadController {
     const blob = bucket.file(`${uuidv4()}-${file.originalname}`);
     const blobStream = blob.createWriteStream({
       metadata: {
-        contentType: 'audio/webm',
+        contentType: file.mimetype,
       },
     });
 

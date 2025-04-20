@@ -22,7 +22,7 @@ let UploadController = class UploadController {
         const blob = firebase_1.bucket.file(`${(0, uuid_1.v4)()}-${file.originalname}`);
         const blobStream = blob.createWriteStream({
             metadata: {
-                contentType: 'application/octet-stream',
+                contentType: file.mimetype,
             },
         });
         return new Promise((resolve, reject) => {
