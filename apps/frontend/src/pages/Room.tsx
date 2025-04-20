@@ -218,6 +218,8 @@ export default function Room() {
     }
   }
 
+  const [audioBlob, setAudioBlob] = useState('');
+
   const handleStopRecording = async () => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stopRecording(async () => {
@@ -225,6 +227,7 @@ export default function Room() {
           const blob = mediaRecorderRef.current.getBlob();
 
           const audioUrl = URL.createObjectURL(blob);
+          setAudioBlob(audioUrl);
           // @ts-ignore
           window.audioUrl = audioUrl;
           const audioElement = new Audio(audioUrl);
@@ -481,6 +484,10 @@ export default function Room() {
 
               {m.type === 'AUDIO' && (
                 <>
+                  <div>audioBlob</div>
+                  {audioBlob && (
+                    <audio src={audioBlob} />
+                  )}
                   <div>current</div>
                   <audio controls src={m.content} className="mt-1" />
                   <div>not working on ios</div>
