@@ -223,7 +223,7 @@ export default function Room() {
       mediaRecorderRef.current.stopRecording(async () => {
         if (mediaRecorderRef.current) {
           const blob = mediaRecorderRef.current.getBlob();
-          const file = new File([blob], `voice-message.webm`);
+          const file = new File([blob], `voice-message.webm`, { type: 'audio/webm' });
 
           const formData = new FormData();
           formData.append('file', file);
@@ -469,8 +469,11 @@ export default function Room() {
               )}
 
               {m.type === 'AUDIO' && (
+                  <>
                 <audio controls src={m.content} className="mt-1" />
-              )}
+                <audio controls src={"https://storage.googleapis.com/alenushka-chat-eaa6a.firebasestorage.app/6bb4f5ac-e2dd-41b2-bd8e-4524e579c5ad-voice-message.webm"} className="mt-1" />
+                </>
+                )}
             </div>
           ))}
           <div className="min-h-[20px] flex">
