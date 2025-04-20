@@ -194,7 +194,7 @@ export default function Room() {
     const initRecording = async () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      mediaRecorderRef.current = new RecordRTC(stream, { type: 'audio' });
+      mediaRecorderRef.current = new RecordRTC(stream, { type: 'audio', mimeType: "audio/webm;codecs=pcm" });
 
       // @ts-ignore
       window.mediaRecorderRef = mediaRecorderRef
@@ -224,6 +224,13 @@ export default function Room() {
         if (mediaRecorderRef.current) {
           const blob = mediaRecorderRef.current.getBlob();
           const file = new File([blob], `voice-message.webm`);
+
+          const audioUrl = URL.createObjectURL(blob);
+          window.audioUrl = audioUrl;
+          const audioElement = new Audio(audioUrl);
+
+          // Play the audio
+          audioElement.play();
 
           const formData = new FormData();
           formData.append('file', file);
@@ -471,7 +478,12 @@ export default function Room() {
               )}
 
               {m.type === 'AUDIO' && (
-                <audio controls src={m.content} className="mt-1" />
+                <>
+                  <div>not working on ios</div>
+                  <audio controls src="https://storage.googleapis.com/alenushka-chat-eaa6a.firebasestorage.app/4d9badf3-bc4c-49e2-b2b1-fc6cc53b7599-voice-message.webm" className="mt-1" />
+                  <div>works</div>
+                  <audio controls src="https://storage.googleapis.com/alenushka-chat-eaa6a.firebasestorage.app/676d0b4a-6c91-446a-a87b-05a319ad5f56-voice-message.webm" className="mt-1" />
+                </>
               )}
             </div>
           ))}
