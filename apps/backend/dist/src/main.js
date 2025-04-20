@@ -14,7 +14,7 @@ async function bootstrap() {
         cert: fs_1.default.readFileSync('./secrets/public-certificate.pem'),
     };
     const app = await core_1.NestFactory.create(app_module_1.AppModule, {
-        httpsOptions
+    // httpsOptions
     });
     app.enableCors();
     app.useStaticAssets((0, path_1.join)(__dirname, '..', 'uploads'), { prefix: '/uploads' });

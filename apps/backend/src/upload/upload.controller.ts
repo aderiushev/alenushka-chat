@@ -11,7 +11,7 @@ export class UploadController {
     const blob = bucket.file(`${uuidv4()}-${file.originalname}`);
     const blobStream = blob.createWriteStream({
       metadata: {
-        contentType: file.mimetype,
+        contentType: 'audio/webm',
       },
     });
 
@@ -19,7 +19,7 @@ export class UploadController {
       blobStream.on('error', (err) => reject(err));
 
       blobStream.on('finish', async () => {
-        await blob.makePublic(); // 👈 make it publicly accessible
+        await blob.makePublic();
         const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
         resolve({ url: publicUrl });
       });

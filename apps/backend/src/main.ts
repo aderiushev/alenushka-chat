@@ -11,7 +11,7 @@ async function bootstrap() {
   };
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    httpsOptions
+    // httpsOptions
   });
   app.enableCors();
   app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads' });

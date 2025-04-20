@@ -22,13 +22,13 @@ let UploadController = class UploadController {
         const blob = firebase_1.bucket.file(`${(0, uuid_1.v4)()}-${file.originalname}`);
         const blobStream = blob.createWriteStream({
             metadata: {
-                contentType: file.mimetype,
+                contentType: 'audio/webm',
             },
         });
         return new Promise((resolve, reject) => {
             blobStream.on('error', (err) => reject(err));
             blobStream.on('finish', async () => {
-                await blob.makePublic(); // 👈 make it publicly accessible
+                await blob.makePublic();
                 const publicUrl = `https://storage.googleapis.com/${firebase_1.bucket.name}/${blob.name}`;
                 resolve({ url: publicUrl });
             });
