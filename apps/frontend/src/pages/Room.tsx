@@ -502,7 +502,7 @@ export default function Room() {
         {isReady && (
           <>
             {room && room.status === 'active' ? (
-              <div className="flex flex-row items-start sm:items-center gap-2 p-2 border-t-1">
+              <div className="flex flex-row items-start sm:items-center gap-2 p-2 border-t-1 justify-end">
                 {!isAdmin && (
                   <>
                     <input
