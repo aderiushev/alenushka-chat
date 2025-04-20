@@ -194,7 +194,7 @@ export default function Room() {
     const initRecording = async () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      mediaRecorderRef.current = new RecordRTC(stream, { type: 'audio', mimeType: "audio/ogg" });
+      mediaRecorderRef.current = new RecordRTC(stream, { type: 'audio', mimeType: "audio/webm" });
 
       // @ts-ignore
       window.mediaRecorderRef = mediaRecorderRef
@@ -225,6 +225,7 @@ export default function Room() {
           const blob = mediaRecorderRef.current.getBlob();
 
           const audioUrl = URL.createObjectURL(blob);
+          // @ts-ignore
           window.audioUrl = audioUrl;
           const audioElement = new Audio(audioUrl);
 
