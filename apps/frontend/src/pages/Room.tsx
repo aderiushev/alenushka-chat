@@ -223,7 +223,7 @@ export default function Room() {
       mediaRecorderRef.current.stopRecording(async () => {
         if (mediaRecorderRef.current) {
           const blob = mediaRecorderRef.current.getBlob();
-          const file = new File([blob], `voice-message.webm`, { type: 'audio/webm' });
+          const file = new File([blob], `voice-message.mp4`, { type: 'audio/aac4' });
 
           const formData = new FormData();
           formData.append('file', file);
