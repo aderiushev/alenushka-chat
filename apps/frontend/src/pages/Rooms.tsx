@@ -79,8 +79,8 @@ export default function Rooms() {
     <div className="min-h-screen flex flex-col flex-1">
       <Header />
 
-      <div className="flex gap-2">
-        <div className="flex sm:items-start overflow-y-auto flex-col flex-1">
+      <div className="flex gap-2 flex-col sm:flex-row overflow-y-auto">
+        <div className="flex sm:items-start flex-col flex-1 order-2 sm:order-1">
         <p className="px-4 text-xl font-semibold">Консультации</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6 p-4 w-full overflow-y-auto">
           {rooms.length ? rooms.map((room) => (
@@ -163,32 +163,32 @@ export default function Rooms() {
         </div>
       </div>
 
-        <div className="m-4 flex flex-col gap-1">
-            <Input
-              value={query}
-              placeholder="Поиск ..."
-              size="lg"
-              color="primary"
-              isClearable
-              onClear={() => handleOnSearchChange('')}
-              onChange={(e) => handleOnSearchChange(e.target.value)}
-            />
-            <Select
-              color="primary"
-              label="Статус"
-              size="sm"
-              value={status}
-              placeholder="Выберите статус"
-              items={FILTER_ITEMS}
-              onChange={(e) => handleOnStatusChange(e.target.value)}
-            >
-              {(item) => <SelectItem key={item.value} >{item.label}</SelectItem>}
-            </Select>
-            <RangeCalendar
-              // @ts-ignore
-              value={dateRange}
-              onChange={handleOnDateRangeChange}
-            />
+        <div className="m-4 flex flex-col gap-1 order-1 sm:order-2">
+          <Input
+            value={query}
+            placeholder="Поиск ..."
+            size="lg"
+            color="primary"
+            isClearable
+            onClear={() => handleOnSearchChange('')}
+            onChange={(e) => handleOnSearchChange(e.target.value)}
+          />
+          <Select
+            color="primary"
+            label="Статус"
+            size="sm"
+            value={status}
+            placeholder="Выберите статус"
+            items={FILTER_ITEMS}
+            onChange={(e) => handleOnStatusChange(e.target.value)}
+          >
+            {(item) => <SelectItem key={item.value} >{item.label}</SelectItem>}
+          </Select>
+          <RangeCalendar
+            // @ts-ignore
+            value={dateRange}
+            onChange={handleOnDateRangeChange}
+          />
         </div>
       </div>
     </div>
