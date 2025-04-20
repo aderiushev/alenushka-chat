@@ -486,7 +486,7 @@ export default function Room() {
                 <>
                   <div>audioBlob</div>
                   {audioBlob && (
-                    <audio src={audioBlob} />
+                    <audio controls src={audioBlob} className="mt-1"/>
                   )}
                   <div>current</div>
                   <audio controls src={m.content} className="mt-1" />
