@@ -194,7 +194,7 @@ export default function Room() {
     const initRecording = async () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      mediaRecorderRef.current = new RecordRTC(stream, { type: 'audio', mimeType: "audio/ogg" });
+      mediaRecorderRef.current = new RecordRTC(stream, { type: 'audio', mimeType: "audio/webm" });
 
       // @ts-ignore
       window.mediaRecorderRef = mediaRecorderRef
@@ -235,9 +235,7 @@ export default function Room() {
           // Play the audio
           audioElement.play();
 
-          const file = new File([blob], `voice-message.webm`, {
-            type: 'audio/webm',
-          });
+          const file = new File([blob], `voice-message.webm`);
 
           const formData = new FormData();
           formData.append('file', file);
