@@ -11,7 +11,7 @@ import {Avatar, Button, Checkbox, Link} from "@heroui/react";
 // @ts-ignore
 import messageSound from '../../public/sounds/new-message.mp3';
 import {useDoctor} from "@/hooks/useDoctor";
-import {useNavigationBlock} from "@/hooks/useNavigationBlock.ts";
+import {useNavigationBlock} from "@/hooks/useNavigationBlock";
 import moment from "moment";
 
 type IconProps = {

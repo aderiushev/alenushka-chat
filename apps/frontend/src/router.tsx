@@ -9,7 +9,7 @@ import Rooms from './pages/Rooms';
 import Login from './pages/Login';
 import CreateRoom from './pages/CreateRoom';
 import NotFound from './pages/NotFound';
-import {useUser} from "@/hooks/useUser.ts";
+import {useUser} from "@/hooks/useUser";
 
 
 const ProtectedRoute = () => {

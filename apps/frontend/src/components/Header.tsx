@@ -1,5 +1,5 @@
 import { Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Button } from "@heroui/react";
-import { useUser } from "@/hooks/useUser.ts";
+import { useUser } from "@/hooks/useUser";
 import {useNavigate} from "react-router-dom";
 
 const Header = ()=>  {

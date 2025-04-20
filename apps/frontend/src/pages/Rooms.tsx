@@ -13,7 +13,7 @@ import {
   PopoverTrigger, RangeCalendar, RangeValue, Select, SelectItem,
 } from "@heroui/react";
 import Header from "@/components/Header.tsx";
-import {useUser} from "@/hooks/useUser.ts";
+import {useUser} from "@/hooks/useUser";
 import {Input} from "@heroui/input";
 import moment from "moment";
 
