@@ -372,7 +372,7 @@ export default function Room() {
 
   const isReady = !!user || isAgreed;
   const isCanEnd = user && (user.role === 'admin' || user.id === room.doctor.userId);
-  const isCanEdit = isReady && (!user || user.role !== 'admin');
+  const isAdmin = user?.role === 'admin';
   const isAgree = Object.values(agree).every((item) => item)
 
   return (
@@ -394,7 +394,7 @@ export default function Room() {
                     <span className={`flex w-3 h-3 rounded-full ${isPatientConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                     <span>{user ? room.patientName : 'Вы'}</span>
                   </span>
-                  {isCanEdit && (
+                  {!isAdmin && (
                     <span className="flex items-center gap-1">
                       <span className={`flex w-3 h-3 rounded-full ${onlineUsers.includes(room.doctor.userId) ? 'bg-green-500' : 'bg-red-500'}`} />
                       <span>{user ? `Вы` : room.doctor.name}</span>
@@ -499,43 +499,50 @@ export default function Room() {
           </div>
         )}
 
-        {isCanEdit && (
+        {isReady && (
           <>
             {room && room.status === 'active' ? (
               <div className="flex flex-row items-start sm:items-center gap-2 p-2 border-t-1">
-                <input
-                    type="file"
-                    id="file"
-                    accept="*/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                />
-                <label
-                  htmlFor="file"
-                  className="min-w-[40px] min-h-[40px] flex items-center justify-center whitespace-nowrap cursor-pointer bg-blue-600 text-white rounded-[12px] hover:bg-blue-500 transition"
-                >
-                  <FileIcon width={20} height={20} fill="#fff" />
-                </label>
+                {!isAdmin && (
+                  <>
+                    <input
+                      type="file"
+                      id="file"
+                      accept="*/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
 
-                <Textarea
-                  classNames={{ input: "max-h-[200px]", inputWrapper: "rounded-none" }}
-                  ref={textareaRef}
-                  value={text}
-                  onChange={(e) => {
-                    setText(e.target.value);
-                    handleTyping();
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                  rows={4}
-                  placeholder="Введите сообщение"
-                  size="lg"
-                  disableAutosize
-                />
+                    <label
+                      htmlFor="file"
+                      className="min-w-[40px] min-h-[40px] flex items-center justify-center whitespace-nowrap cursor-pointer bg-blue-600 text-white rounded-[12px] hover:bg-blue-500 transition"
+                    >
+                      <FileIcon width={20} height={20} fill="#fff" />
+                    </label>
+                  </>
+                )}
+
+                {!isAdmin && (
+                  <Textarea
+                    classNames={{ input: "max-h-[200px]", inputWrapper: "rounded-none" }}
+                    ref={textareaRef}
+                    value={text}
+                    onChange={(e) => {
+                      setText(e.target.value);
+                      handleTyping();
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    rows={4}
+                    placeholder="Введите сообщение"
+                    size="lg"
+                    disableAutosize
+                  />
+                )}
 
                   <div className="flex gap-2 justify-end w-auto">
                     {textareaRef.current?.value && (

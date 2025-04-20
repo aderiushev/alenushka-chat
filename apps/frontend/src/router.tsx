@@ -25,7 +25,7 @@ const ProtectedRoute = () => {
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<AppLayout />}>
-      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<Login />} />
       <Route path="/room/:id" element={<Room />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/rooms" element={<Rooms />} />

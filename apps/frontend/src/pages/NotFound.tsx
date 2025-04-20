@@ -1,4 +1,4 @@
-import { Card, CardBody } from "@heroui/react";
+import { Card, CardBody, Link } from "@heroui/react";
 
 const NotFound = () => {
   return (
@@ -7,6 +7,7 @@ const NotFound = () => {
         <CardBody className="space-y-4">
           <h1 className="text-5xl font-bold text-red-500">404</h1>
           <p className="text-lg text-gray-700">Страница не найдена</p>
+          <Link href="/">Вернуться на главную</Link>
         </CardBody>
       </Card>
     </div>
