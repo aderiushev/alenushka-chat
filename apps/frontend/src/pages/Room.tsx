@@ -565,15 +565,19 @@ export default function Room() {
                       </Button>
                     )}
 
-                    {isRecording ? (
-                      <Button color="danger" isIconOnly onPress={handleStopRecording}>
-                        <StopRecordingIcon width={20} height={20} fill="#fff" />
-                      </Button>
-                    ) : (
-                      <Button color="warning" isIconOnly onPress={handleStartRecording}>
-                        <StartRecordingIcon width={20} height={20} fill="#fff" />
-                      </Button>
-                    )}
+                    {!isAdmin && (
+                      <>
+                        {isRecording ? (
+                          <Button color="danger" isIconOnly onPress={handleStopRecording}>
+                            <StopRecordingIcon width={20} height={20} fill="#fff" />
+                          </Button>
+                        ) : (
+                          <Button color="warning" isIconOnly onPress={handleStartRecording}>
+                            <StartRecordingIcon width={20} height={20} fill="#fff" />
+                          </Button>
+                        )}
+                      </>
+                      )}
                   </div>
               </div>
             ) : (
