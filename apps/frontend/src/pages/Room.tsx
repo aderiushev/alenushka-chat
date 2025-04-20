@@ -1,8 +1,9 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import RecordRTC from 'recordrtc';
 import { useSearchParams } from 'react-router-dom';
 import { useSocketStore } from '../store/socketStore';
+// @ts-ignore
+import { AudioRecorder }  from './../utils/audio';
 import { api } from '../api';
 import {useUser} from "../hooks/useUser";
 import {useRoom} from "../hooks/useRoom";
@@ -68,7 +69,7 @@ export default function Room() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const mediaRecorderRef = useRef<RecordRTC | null>(null);
+  const mediaRecorderRef = useRef<AudioRecorder | null>(null);
 
   const [isRecording, setIsRecording] = useState(false);
   const { user } = useUser();
@@ -191,72 +192,77 @@ export default function Room() {
   // };
 
   useEffect(() => {
-    const initRecording = async () => {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      mediaRecorderRef.current = new RecordRTC(stream, { type: 'audio', mimeType: "audio/webm;codecs=pcm" });
-
-      // @ts-ignore
-      window.mediaRecorderRef = mediaRecorderRef
-    };
-
-    initRecording();
-
-
-    return () => {
-      if (mediaRecorderRef.current) {
-        mediaRecorderRef.current.destroy();
-        mediaRecorderRef.current = null;
-      }
-    };
+    mediaRecorderRef.current = new AudioRecorder()
   }, []);
 
   const handleStartRecording = async () => {
     if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.startRecording();
+      mediaRecorderRef.current.start();
       setIsRecording(true);
     }
   }
 
-  const [audioBlob, setAudioBlob] = useState('');
-
   const handleStopRecording = async () => {
     if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stopRecording(async () => {
-        if (mediaRecorderRef.current) {
-          const blob = mediaRecorderRef.current.getBlob();
+          mediaRecorderRef.current.stop(async (blob: Blob) => {
+            const file = new File([blob], `voice-message.webm`);
+            const formData = new FormData();
+            formData.append('file', file);
 
-          const audioUrl = URL.createObjectURL(blob);
-          setAudioBlob(audioUrl);
-          // @ts-ignore
-          window.audioUrl = audioUrl;
-          const audioElement = new Audio(audioUrl);
+            const res = await api.post('/upload/file', formData);
+            const url = res.data.url;
 
-          // Play the audio
-          audioElement.play();
+            if (id) {
+              sendMessage({
+                roomId: id,
+                doctorId: doctor ? doctor.id : undefined,
+                type: 'AUDIO',
+                content: url,
+              });
+            }
 
-          const file = new File([blob], `voice-message.webm`);
-
-          const formData = new FormData();
-          formData.append('file', file);
-
-          const res = await api.post('/upload/file', formData);
-          const url = res.data.url;
-
-          if (id) {
-            sendMessage({
-              roomId: id,
-              doctorId: doctor ? doctor.id : undefined,
-              type: 'AUDIO',
-              content: url,
-            });
-          }
-
-          setIsRecording(false);
-        }
-      })
+            setIsRecording(false);
+          })
     }
   }
+
+  // const handleStopRecording = async () => {
+  //   if (mediaRecorderRef.current) {
+  //     mediaRecorderRef.current.stopRecording(async () => {
+  //       if (mediaRecorderRef.current) {
+  //         const blob = mediaRecorderRef.current.getBlob();
+  //
+  //         const audioUrl = URL.createObjectURL(blob);
+  //         setAudioBlob(audioUrl);
+  //         // @ts-ignore
+  //         window.audioUrl = audioUrl;
+  //         const audioElement = new Audio(audioUrl);
+  //
+  //         // Play the audio
+  //         audioElement.play();
+  //
+  //         const file = new File([blob], `voice-message.webm`);
+  //
+  //         const formData = new FormData();
+  //         formData.append('file', file);
+  //
+  //         const res = await api.post('/upload/file', formData);
+  //         const url = res.data.url;
+  //
+  //         if (id) {
+  //           sendMessage({
+  //             roomId: id,
+  //             doctorId: doctor ? doctor.id : undefined,
+  //             type: 'AUDIO',
+  //             content: url,
+  //           });
+  //         }
+  //
+  //         setIsRecording(false);
+  //       }
+  //     })
+  //   }
+  // }
 
   const handleChangeAgree = (id: number) => {
     setAgree((state) => ({
@@ -484,10 +490,6 @@ export default function Room() {
 
               {m.type === 'AUDIO' && (
                 <>
-                  <div>audioBlob</div>
-                  {audioBlob && (
-                    <audio controls src={audioBlob} className="mt-1"/>
-                  )}
                   <div>current</div>
                   <audio controls src={m.content} className="mt-1" />
                   <div>not working on ios</div>
