@@ -49,6 +49,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-router-dom": "6.23.0",
+    "recordrtc": "^5.6.2",
     "socket.io-client": "^4.8.1",
     "tailwind-variants": "0.3.0",
     "tailwindcss": "3.4.16",
@@ -61,6 +62,7 @@
     "@types/node": "20.5.7",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
+    "@types/recordrtc": "^5.6.14",
     "@vitejs/plugin-basic-ssl": "^2.0.0"
   }
 }

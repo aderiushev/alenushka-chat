@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
+import RecordRTC from 'recordrtc';
 import { useSearchParams } from 'react-router-dom';
 import { useSocketStore } from '../store/socketStore';
 import { api } from '../api';
@@ -66,7 +67,9 @@ export default function Room() {
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+
+  const mediaRecorderRef = useRef<RecordRTC>(null);
+
   const [isRecording, setIsRecording] = useState(false);
   const { user } = useUser();
   const { room, refetch } = useRoom(id);
@@ -143,40 +146,159 @@ export default function Room() {
   }, [text]);
 
 
+  // const handleStartRecording = async () => {
+  //   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  //
+  //   const mimeType = MediaRecorder.isTypeSupported('audio/mp4')
+  //       ? 'audio/mp4'
+  //       : MediaRecorder.isTypeSupported('audio/webm')
+  //           ? 'audio/webm'
+  //           : '';
+  //
+  //   const mediaRecorder = new MediaRecorder(stream, {
+  //     mimeType
+  //   });
+  //   const audioChunks: Blob[] = [];
+  //
+  //   mediaRecorderRef.current = mediaRecorder;
+  //   mediaRecorder.ondataavailable = (event) => {
+  //     audioChunks.push(event.data);
+  //   };
+  //   mediaRecorder.onstop = async () => {
+  //     const audioBlob = new Blob(audioChunks, { type:mimeType });
+  //     const file = new File([audioBlob], 'voice-message.webm');
+  //
+  //     const formData = new FormData();
+  //     formData.append('file', file);
+  //
+  //     const res = await api.post('/upload/file', formData);
+  //     const url = res.data.url;
+  //
+  //     if (id) {
+  //       sendMessage({ roomId: id, doctorId: doctor ? doctor.id : undefined, type: 'AUDIO', content: url });
+  //     }
+  //   };
+  //
+  //   mediaRecorder.start();
+  //   setIsRecording(true);
+  // };
+
+  // const handleStopRecording = () => {
+  //   if (mediaRecorderRef.current) {
+  //     mediaRecorderRef.current.stop();
+  //     setIsRecording(false);
+  //   }
+  // };
+
   const handleStartRecording = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'audio/mp4',
+    navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true
+    }).then(async function(stream) {
+      let recorder = new RecordRTC(stream, {
+        type: 'audio'
+      });
+      recorder.startRecording();
+
+      recorder.stopRecording(async function() {
+        let blob = recorder.getBlob();
+        const file = new File([blob], `voice-message.webm`);
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await api.post('/upload/file', formData);
+        const url = res.data.url;
+
+        if (id) {
+          sendMessage({
+            roomId: id,
+            doctorId: doctor ? doctor.id : undefined,
+            type: 'AUDIO',
+            content: url,
+          });
+        }
+      });
     });
-    const audioChunks: Blob[] = [];
 
-    mediaRecorderRef.current = mediaRecorder;
-    mediaRecorder.ondataavailable = (event) => {
-      audioChunks.push(event.data);
-    };
-    mediaRecorder.onstop = async () => {
-      const audioBlob = new Blob(audioChunks, { type: 'audio/mp4' });
-      const file = new File([audioBlob], 'voice-message.webm');
+    // let stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+    // let recorder = new RecordRTCPromisesHandler(stream, {
+    //   type: 'video'
+    // });
+    // recorder.startRecording();
+    //
+    // const sleep = m => new Promise(r => setTimeout(r, m));
+    // await sleep(3000);
+    //
+    // await recorder.stopRecording();
+    // let blob = await recorder.getBlob();
+    //
+    // console.log('debug blob', blob)
+    //
+    // const file = new File([blob], `voice-message.webm`);
+    //
+    // const formData = new FormData();
+    // formData.append('file', file);
+    //
+    // const res = await api.post('/upload/file', formData);
+    // const url = res.data.url;
+    //
+    // if (id) {
+    //   sendMessage({
+    //     roomId: id,
+    //     doctorId: doctor ? doctor.id : undefined,
+    //     type: 'AUDIO',
+    //     content: url,
+    //   });
+    // }
 
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const res = await api.post('/upload/file', formData);
-      const url = res.data.url;
-
-      if (id) {
-        sendMessage({ roomId: id, doctorId: doctor ? doctor.id : undefined, type: 'AUDIO', content: url });
-      }
-    };
-
-    mediaRecorder.start();
-    setIsRecording(true);
+    // invokeSaveAsDialog(blob);
+    // const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    //
+    // mediaRecorderRef.current = new RecordRTC(stream, { type: 'audio' });
+    //
+    // if (mediaRecorderRef.current) {
+    //   mediaRecorderRef.current.startRecording();
+    //   setIsRecording(true);
+    // } else {
+    //   console.error('Failed to initialize recorder');
+    // }
   };
 
-  const handleStopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
+  const handleStopRecording = async () => {
+    try {
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stopRecording(() => {
+          if (mediaRecorderRef.current) {
+            let blob = mediaRecorderRef.current.getBlob();
+            const mime = blob.type || 'audio/wav';
+            const extension = mime.split('/')[1];
+
+            const file = new File([blob], `voice-message.${extension}`, {type: mime});
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            api.post('/upload/file', formData).then((res) => {
+              const url = res.data.url;
+
+              if (id) {
+                sendMessage({
+                  roomId: id,
+                  doctorId: doctor ? doctor.id : undefined,
+                  type: 'AUDIO',
+                  content: url,
+                });
+              }
+
+              setIsRecording(false);
+            });
+
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error during stopRecording:', error);
     }
   };
 
