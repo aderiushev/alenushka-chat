@@ -76,7 +76,7 @@ export default function Rooms() {
   };
 
   return (
-    <div className="min-h-screen-safe pt-safe-top pb-safe-bottom flex flex-col flex-1">
+    <div className="flex flex-col flex-1">
       <Header />
 
       <div className="flex gap-2 flex-col sm:flex-row overflow-y-auto">

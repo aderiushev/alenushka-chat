@@ -19,7 +19,7 @@ export default function Register() {
   };
 
   return (
-      <div className="min-h-screen flex flex-col">
+      <div className="flex flex-col">
         <Header />
         <div className="flex sm:items-center justify-center flex-1">
           <Form onSubmit={handleRegister} className="bg-white p-6 rounded shadow-md w-full max-w-sm">

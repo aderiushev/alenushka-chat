@@ -54,7 +54,7 @@ export default function CreateRoom() {
   };
 
   return (
-      <div className="min-h-screen flex flex-col">
+      <div className="flex flex-col flex-1">
         <Header />
         <div className="flex sm:items-center justify-center flex-1">
           <Form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-full max-w-sm">

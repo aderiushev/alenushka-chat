@@ -15,7 +15,7 @@ const Header = ()=>  {
 
   return (
     <Navbar
-      className="p-2 flex"
+      className="p-2 flex min-h-[56px]"
       // @ts-ignore
       style={{ '--navbar-height': 'auto' }}
       classNames={{ wrapper: "flex flex-col sm:flex-row max-w-none" }}
