@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import RecordRTC from 'recordrtc';
 import { useSearchParams } from 'react-router-dom';
 import { useSocketStore } from '../store/socketStore';
@@ -7,12 +7,35 @@ import { api } from '../api';
 import {useUser} from "../hooks/useUser";
 import {useRoom} from "../hooks/useRoom";
 import {Textarea} from "@heroui/input";
-import {Avatar, Button, Checkbox, Link} from "@heroui/react";
+import {
+  Avatar,
+  Button,
+  Checkbox,
+  Link,
+  Modal,
+  ModalBody,
+  ModalContent,
+} from "@heroui/react";
 // @ts-ignore
 import messageSound from '../../public/sounds/new-message.mp3';
 import {useDoctor} from "@/hooks/useDoctor";
 import {useNavigationBlock} from "@/hooks/useNavigationBlock";
 import moment from "moment";
+
+type NotificationProps = {
+  children?: React.ReactNode;
+}
+const Notification = (props: NotificationProps) => {
+  return (
+    <Modal isOpen={true} hideCloseButton>
+      <ModalContent>
+        <ModalBody className="p-10 flex items-center justify-center">
+          {!!props.children && props.children}
+        </ModalBody>
+      </ModalContent>
+    </Modal>
+  )
+}
 
 type IconProps = {
   width?: number;
@@ -44,12 +67,6 @@ const StartRecordingIcon = (props: IconProps) => (
   </svg>
 );
 
-const StopRecordingIcon = (props: IconProps) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" {...props}>
-    <path d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512m-64-352h128c17.7 0 32 14.3 32 32v128c0 17.7-14.3 32-32 32H192c-17.7 0-32-14.3-32-32V192c0-17.7 14.3-32 32-32"></path>
-  </svg>
-);
-
 export default function Room() {
   const { id } = useParams();
   const connect = useSocketStore((s) => s.connect);
@@ -70,8 +87,10 @@ export default function Room() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const mediaRecorderRef = useRef<RecordRTC | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const [isRecording, setIsRecording] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const { user } = useUser();
   const { room, refetch } = useRoom(id);
   const { doctor } = useDoctor(room?.doctorId);
@@ -147,6 +166,7 @@ export default function Room() {
 
   const handleStartRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    streamRef.current = stream;
     mediaRecorderRef.current = new RecordRTC(stream, {
       type: 'audio'
     });
@@ -155,7 +175,21 @@ export default function Room() {
     setIsRecording(true);
   }
 
-  const handleStopRecording = async () => {
+  const handleStopRecordingAndCancel = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stopRecording(() => {
+        mediaRecorderRef.current = null;
+        setIsRecording(false);
+      });
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+  };
+
+  const handleStopRecordingAndSend = async () => {
     if (mediaRecorderRef.current) {
       await mediaRecorderRef.current.stopRecording(async () => {
         if (mediaRecorderRef.current) {
@@ -178,6 +212,11 @@ export default function Room() {
               type: 'AUDIO',
               content: url,
             });
+          }
+
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
           }
 
           setIsRecording(false);
@@ -209,6 +248,8 @@ export default function Room() {
     const file = e.target.files?.[0];
     if (!file || !id) return;
 
+    setIsUploading(true);
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -217,6 +258,8 @@ export default function Room() {
 
     const type = file.type.startsWith('image/') ? 'IMAGE' : 'FILE';
     sendMessage({ roomId: id, doctorId: user ? user.doctor?.id : undefined, type, content: url });
+
+    setIsUploading(false);
   };
 
   const handleTyping = () => {
@@ -331,6 +374,26 @@ export default function Room() {
 
   return (
     <div className="flex gap-1 flex-1">
+      {isRecording && (
+        <Notification>
+          <p>Происходит запись голосового сообщения...</p>
+          <div className="flex gap-2 items-center">
+            <Button color="success" className="text-white" onPress={handleStopRecordingAndSend}>
+              Отправить
+            </Button>
+            <Button color="danger" onPress={handleStopRecordingAndCancel}>
+              Отменить
+            </Button>
+          </div>
+        </Notification>
+      )}
+      {isUploading && (
+          <Notification>
+            <p className="text-gray-500 text-lg">
+              Файл загружается...
+            </p>
+          </Notification>
+      )}
       <div className="flex flex-col flex-1">
         <div className="p-4 border-b bg-white shadow z-10">
           <div className="flex flex-col gap-1">
@@ -438,7 +501,7 @@ export default function Room() {
             </div>
             <div className="mt-2">
               <Checkbox onChange={() => handleChangeAgree(1)} classNames={{ hiddenInput: 'z-[0]' }}>
-                Я согласен на <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/soglasie-na-chat-perepisku.pdf">обработку персональных данных</Link>. С <Link target="_blank" href="https://alenushka-pediatr.ru/personal-data-agreement"> Политикой конфиденциальности и защиты персональных данных</Link> ознакомлен.
+                Я согласен на <Link target="_blank" href="https://alenushka-pediatr.ru/personal-data-agreement">обработку персональных данных</Link>. С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/politika-personalnyh-dannyh.pdf"> Политикой конфиденциальности и защиты персональных данных</Link> ознакомлен.
               </Checkbox>
               <Checkbox onChange={() => handleChangeAgree(2)} classNames={{ hiddenInput: 'z-[0]' }}>
                 С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/dogovor-oferta-na-distkonsultaciu.pdf">Договором-офертой</Link> на возмездное оказание медицинских услуг с использованием дистанционного взаимодействия ознакомлен.
@@ -521,19 +584,11 @@ export default function Room() {
                       </Button>
                     )}
 
-                    {!isAdmin && (
-                      <>
-                        {isRecording ? (
-                          <Button color="danger" isIconOnly onPress={handleStopRecording}>
-                            <StopRecordingIcon width={20} height={20} fill="#fff" />
-                          </Button>
-                        ) : (
-                          <Button color="warning" isIconOnly onPress={handleStartRecording}>
-                            <StartRecordingIcon width={20} height={20} fill="#fff" />
-                          </Button>
-                        )}
-                      </>
-                      )}
+                    {!isAdmin && !isRecording && (
+                      <Button color="warning" isIconOnly onPress={handleStartRecording}>
+                        <StartRecordingIcon width={20} height={20} fill="#fff" />
+                      </Button>
+                    )}
                   </div>
               </div>
             ) : (
