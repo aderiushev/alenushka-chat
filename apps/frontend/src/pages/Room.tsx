@@ -553,7 +553,7 @@ export default function Room() {
                       handleTyping();
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                         e.preventDefault();
                         handleSend();
                       }
