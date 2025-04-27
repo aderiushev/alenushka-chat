@@ -6,7 +6,9 @@ const UserContext = createContext(null as any);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<null | User>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean | null>(null);
+
+  const isLoaded = isLoading === false;
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -17,13 +19,13 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     api
-        .get("/auth/me")
-        .then((res) => setUser(res.data))
-        .catch(() => {
-          setUser(null);
-          localStorage.removeItem("token");
-        })
-        .finally(() => setIsLoading(false));
+      .get("/auth/me")
+      .then((res) => setUser(res.data))
+      .catch(() => {
+        setUser(null);
+        localStorage.removeItem("token");
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
   const logout = () => {
@@ -36,13 +38,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('token', res.data.token);
     const me = await api.get('/auth/me');
     setUser(me.data);
+
+    return me.data;
   };
 
   return (
-    <UserContext.Provider value={{ user, isLoading, logout, login }}>
+    <UserContext.Provider value={{ user, isLoaded, logout, login }}>
       {children}
     </UserContext.Provider>
-);
+  );
 };
 
 export const useUser = () => useContext(UserContext);

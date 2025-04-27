@@ -91,7 +91,7 @@ export default function Room() {
 
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const { user } = useUser();
+  const { user, isLoaded: isUserLoaded } = useUser();
   const { room, refetch } = useRoom(id);
   const { doctor } = useDoctor(room?.doctorId);
   const navigate = useNavigate();
@@ -105,14 +105,16 @@ export default function Room() {
   useNavigationBlock(textareaRef);
 
   useEffect(() => {
-    if (room && doctorId && !user) {
-      navigate(`/?roomId=${room.id}`);
-    }
+    if (isUserLoaded) {
+      if (room && doctorId && !user) {
+        navigate(`/?roomId=${room.id}&doctorId=${doctorId}`);
+      }
 
-    if (room && user && doctorId && Number(doctorId) !== user.doctorId && user.role !== 'admin') {
-      navigate(`/?roomId=${room.id}`);
+      if (room && user && doctorId && Number(doctorId) !== user?.doctor.id && user.role !== 'admin') {
+        navigate(`/?roomId=${room.id}`);
+      }
     }
-  }, [doctorId, user, room]);
+  }, [doctorId, user, room, isUserLoaded]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -395,7 +397,7 @@ export default function Room() {
           </Notification>
       )}
       <div className="flex flex-col flex-1">
-        <div className="p-4 border-b bg-white shadow z-10">
+        <div className={`p-4 border-b shadow z-10 ${user?.doctor ? 'bg-yellow-300' : 'bg-white'}`}>
           <div className="flex flex-col gap-1">
             <div className="flex gap-2 flex-col">
               <div className="gap-2 flex justify-between flex-col sm:flex-row flex-1">

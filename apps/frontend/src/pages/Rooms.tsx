@@ -185,6 +185,7 @@ export default function Rooms() {
             {(item) => <SelectItem key={item.value} >{item.label}</SelectItem>}
           </Select>
           <RangeCalendar
+            firstDayOfWeek="mon"
             // @ts-ignore
             value={dateRange}
             onChange={handleOnDateRangeChange}

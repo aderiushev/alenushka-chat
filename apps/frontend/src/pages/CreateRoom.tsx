@@ -42,7 +42,7 @@ export default function CreateRoom() {
 
     setLoading(true);
     try {
-      await api.post('/rooms', { userId: Number(selectedUserId), patientName });
+      await api.post('/rooms', { userId: Number(selectedUserId), patientName: patientName.trim() });
 
       // After successful room creation, navigate back to rooms list
       navigate('/rooms');
