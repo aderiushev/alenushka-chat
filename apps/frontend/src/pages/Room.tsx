@@ -10,7 +10,7 @@ import {Textarea} from "@heroui/input";
 import {
   Avatar,
   Button,
-  Checkbox,
+  Checkbox, Image,
   Link,
   Modal,
   ModalBody,
@@ -117,12 +117,8 @@ export default function Room() {
   }, [doctorId, user, room, isUserLoaded]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, []);
 
   useEffect(() => {
     if (id) connect(id);
@@ -436,7 +432,7 @@ export default function Room() {
         </div>
 
         {isReady ? (
-          <div className="flex-1 overflow-y-auto gap-1 flex flex-col px-4 pt-4">
+          <div onScroll={(e) => console.log(e)} className="flex-1 overflow-y-auto gap-1 flex flex-col px-4 pt-4">
           {messages.map((m) => (
             <div id={m.id} key={m.id} className={`border-b p-2 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, m) && 'bg-primary-50'}`}>
               <div className="flex gap-2 items-center">
@@ -453,17 +449,14 @@ export default function Room() {
                 <div className="whitespace-pre-wrap">{m.content}</div>
               )}
               {m.type === 'IMAGE' && (
-                <>
-                  <img src={m.content} className="w-32 mt-1" alt="uploaded" />
-                  <Link
-                    href={m.content}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-blue-600 underline"
-                  >
-                    Открыть
-                  </Link>
-                </>
+                <Link
+                  href={m.content}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-600 underline"
+                >
+                  <Image src={m.content} className="w-32 h-32 object-cover mt-1" alt="uploaded" />
+                </Link>
               )}
               {m.type === 'FILE' && (
                 <Link
