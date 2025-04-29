@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import _ from 'lodash';
+import {I18nProvider} from "@react-aria/i18n";
 import {today, getLocalTimeZone, ZonedDateTime, CalendarDate, DateValue} from "@internationalized/date";
 import { api } from "../api";
 import {
@@ -105,12 +106,12 @@ export default function Rooms() {
                       <Popover placement="right">
                         <PopoverTrigger>
                           <Button
-                              color="primary"
-                              size="sm"
-                              onClick={(e) =>  {
-                                e.preventDefault();
-                                onCopyDoctorLink(room.id, room.doctor.id);
-                              }}
+                            color="primary"
+                            size="sm"
+                            onClick={(e) =>  {
+                              e.preventDefault();
+                              onCopyDoctorLink(room.id, room.doctor.id);
+                            }}
                           >
                             Скопировать ссылку для доктора
                           </Button>
@@ -184,12 +185,14 @@ export default function Rooms() {
           >
             {(item) => <SelectItem key={item.value} >{item.label}</SelectItem>}
           </Select>
-          <RangeCalendar
-            firstDayOfWeek="mon"
-            // @ts-ignore
-            value={dateRange}
-            onChange={handleOnDateRangeChange}
-          />
+          <I18nProvider locale="ru">
+            <RangeCalendar
+              firstDayOfWeek="mon"
+              // @ts-ignore
+              value={dateRange}
+              onChange={handleOnDateRangeChange}
+            />
+          </I18nProvider>
         </div>
       </div>
     </div>

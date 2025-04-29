@@ -60,7 +60,15 @@ let ChatGateway = class ChatGateway {
     }
     async handleSendMessage(dto, client) {
         const message = await this.chatService.createMessage(dto);
-        this.server.to(dto.roomId).emit('new-message', { message, clientId: client.id });
+        this.server.to(message.roomId).emit('new-message', { message, clientId: client.id });
+    }
+    async handleEditMessage(dto, client) {
+        const message = await this.chatService.editMessage(dto);
+        this.server.to(message.roomId).emit('edited-message', { message, clientId: client.id });
+    }
+    async handleDeleteMessage(dto, client) {
+        await this.chatService.deleteMessage(dto);
+        this.server.to(dto.roomId).emit('deleted-message', { id: dto.id, clientId: client.id });
     }
 };
 exports.ChatGateway = ChatGateway;
@@ -92,6 +100,22 @@ __decorate([
     __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
     __metadata("design:returntype", Promise)
 ], ChatGateway.prototype, "handleSendMessage", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('edit-message'),
+    __param(0, (0, websockets_1.MessageBody)()),
+    __param(1, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:returntype", Promise)
+], ChatGateway.prototype, "handleEditMessage", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('delete-message'),
+    __param(0, (0, websockets_1.MessageBody)()),
+    __param(1, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:returntype", Promise)
+], ChatGateway.prototype, "handleDeleteMessage", null);
 exports.ChatGateway = ChatGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({ cors: true, namespace: '/', path: '/api/socket.io' }),
     __metadata("design:paramtypes", [chat_service_1.ChatService,

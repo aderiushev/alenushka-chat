@@ -29,6 +29,30 @@ let ChatService = class ChatService {
             }
         });
     }
+    async editMessage(data) {
+        const message = await this.prisma.message.update({
+            data,
+            where: {
+                id: data.id,
+            }
+        });
+        return this.prisma.message.findFirst({
+            where: {
+                id: message.id
+            },
+            include: {
+                doctor: true,
+            }
+        });
+    }
+    async deleteMessage(data) {
+        await this.prisma.message.delete({
+            where: {
+                id: data.id,
+            }
+        });
+        return data.id;
+    }
     async getMessagesForRoom(roomId) {
         return this.prisma.message.findMany({
             where: { roomId },

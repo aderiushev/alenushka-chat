@@ -6,6 +6,8 @@ interface SocketState {
   messages: Message[];
   connect: (roomId: string) => void;
   sendMessage: (message: Omit<Message, 'id' | 'createdAt'>) => void;
+  editMessage: (message: Omit<Message, 'createdAt'>) => void;
+  deleteMessage: (message: Message) => void;
 }
 
 export const useSocketStore = create<SocketState>((set, get) => ({
@@ -38,10 +40,28 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       }));
     });
 
+    socket.on('edited-message', (payload: { message: Message, clientId: string }) => {
+      set((state) => ({
+        messages: state.messages.map((item) => item.id === payload.message.id ? payload.message : item)
+      }));
+    });
+
+    socket.on('deleted-message', (payload: { id: string, clientId: string }) => {
+      set((state) => ({
+        messages: state.messages.filter((item) => item.id !== payload.id),
+      }));
+    });
+
     socket.emit('join-room', roomId);
     set({ socket });
   },
   sendMessage: (msg) => {
     get().socket?.emit('send-message', msg);
+  },
+  editMessage: (msg) => {
+    get().socket?.emit('edit-message', msg);
+  },
+  deleteMessage: (id) => {
+    get().socket?.emit('delete-message', id);
   },
 }));

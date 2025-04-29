@@ -14,7 +14,7 @@ import {
   Link,
   Modal,
   ModalBody,
-  ModalContent,
+  ModalContent, Popover, PopoverContent, PopoverTrigger,
 } from "@heroui/react";
 // @ts-ignore
 import messageSound from '../../public/sounds/new-message.mp3';
@@ -67,6 +67,119 @@ const StartRecordingIcon = (props: IconProps) => (
   </svg>
 );
 
+const MoreIcon = (props: IconProps) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" {...props}>
+      <path d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512m-96-288a32 32 0 1 1 0 64 32 32 0 1 1 0-64m64 32a32 32 0 1 1 64 0 32 32 0 1 1-64 0m128-32a32 32 0 1 1 0 64 32 32 0 1 1 0-64"></path>
+    </svg>
+);
+
+type MessageProps = {
+  item: Message;
+  room: Room;
+  onEdit: (message: Message) => void;
+}
+
+const Message = (props: MessageProps) => {
+  const deleteMessage = useSocketStore((s) => s.deleteMessage);
+  const [isMessagePopoverOpen, setIsMessagePopoverOpen] = useState(false)
+
+  const { user } = useUser();
+
+  const getSenderName = (user: User | null, message: Message): string => {
+    if (props.room) {
+      if (user) {
+        return user.doctor?.id === message.doctorId ? 'Вы' : props.room.patientName;
+      }
+
+      return message.doctorId ? props.room.doctor.name : 'Вы';
+    }
+
+    return '';
+  };
+
+  const isMe = (user: User | null, message: Message): boolean => {
+    if (user) {
+      return user.doctor?.id === message.doctorId;
+    }
+
+    return !message.doctorId;
+  };
+
+  const onEdit = () => {
+    setIsMessagePopoverOpen(false);
+    props.onEdit(props.item);
+  }
+
+  const onDelete = () => {
+    setIsMessagePopoverOpen(false);
+    deleteMessage(props.item);
+  }
+
+  return (
+    <div key={props.item.id} className={`border-b p-2 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, props.item) && 'bg-primary-50'}`}>
+      <div className="flex gap-2 items-center">
+        <div className="flex-1 flex items-center gap-1">
+          {props.item.doctorId && (
+            <Avatar src={props.item.doctor?.imageUrl} />
+          )}
+          <strong>{getSenderName(user, props.item)}:</strong>
+        </div>
+
+        <div className="flex flex-col gap-2 items-end">
+          <span className="text-xs">{moment(props.item.createdAt).format('DD.MM.YYYY HH:mm')}</span>
+          <Popover placement="right" isOpen={isMessagePopoverOpen} disableAnimation onClose={() => setIsMessagePopoverOpen(false)}>
+            <PopoverTrigger>
+              <Button isIconOnly className="bg-inherit" onClick={() => setIsMessagePopoverOpen(true)}>
+                <MoreIcon width={20} height={20} />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent>
+              <div className="px-1 py-2 flex flex-col gap-2">
+                {props.item.type === 'TEXT' && (
+                  <Button color="primary" className="text-small" onClick={onEdit}>Редактировать</Button>
+                )}
+                <Button color="danger" className="text-small" onClick={onDelete}>Удалить</Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
+      {props.item.type === 'TEXT' && (
+        <div className="whitespace-pre-wrap">{props.item.content}</div>
+      )}
+      {props.item.type === 'IMAGE' && (
+        <Link
+          href={props.item.content}
+          target="_blank"
+          rel="noreferrer"
+          className="text-blue-600 underline"
+        >
+          <Image src={props.item.content} className="w-32 h-32 object-cover mt-1" alt="uploaded" />
+        </Link>
+      )}
+      {props.item.type === 'FILE' && (
+        <Link
+          href={props.item.content}
+          target="_blank"
+          rel="noreferrer"
+          className="text-blue-600 underline"
+        >
+          Скачать файл
+        </Link>
+      )}
+
+      {props.item.type === 'AUDIO' && (
+        <audio controls className="mt-1">
+          <source src={props.item.content} type="audio/mpeg" />
+          <source src={props.item.content} type="audio/ogg" />
+          <source src={props.item.content} type="audio/webm" />
+        </audio>
+      )}
+    </div>
+  )
+}
+
 export default function Room() {
   const { id } = useParams();
   const connect = useSocketStore((s) => s.connect);
@@ -79,6 +192,8 @@ export default function Room() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [searchParams] = useSearchParams();
   const doctorId = searchParams.get('doctorId');
+  const editMessage = useSocketStore((s) => s.editMessage);
+  const [messageEditingId, setMessageEditingId] = useState<string | null>(null);
 
   const socket = useSocketStore((state) => state.socket);
   const sendMessage = useSocketStore((s) => s.sendMessage);
@@ -120,6 +235,18 @@ export default function Room() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   };
 
+  const onEdit = (item: Message) => {
+    setText(item.content)
+    setMessageEditingId(item.id);
+    if (textareaRef.current) {
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+        }
+      }, 0)
+    }
+  }
+
   useEffect(() => {
     if (id) connect(id);
   }, [id, connect]);
@@ -145,7 +272,16 @@ export default function Room() {
       window.dispatchEvent(event);
     });
 
-    // Cleanup on unmount
+    // socket.on('edited-message', ({ clientId }) => {
+    //   const event = new CustomEvent('new-message-received');
+    //   window.dispatchEvent(event);
+    // });
+    //
+    // socket.on('deleted-message', ({ clientId }) => {
+    //   const event = new CustomEvent('new-message-received');
+    //   window.dispatchEvent(event);
+    // });
+
     return () => {
       socket.disconnect();
     };
@@ -223,6 +359,11 @@ export default function Room() {
     }
   }
 
+  const onCancelEditing = () => {
+    setMessageEditingId(null);
+    setText('');
+  }
+
   const handleChangeAgree = (id: number) => {
     setAgree((state) => ({
       ...state,
@@ -238,7 +379,11 @@ export default function Room() {
   const handleSend = () => {
     if (!text.trim() || !id) return;
 
-    sendMessage({ roomId: id, doctorId: user ? user.doctor?.id : undefined, type: 'TEXT', content: text });
+    if (messageEditingId) {
+      editMessage({ id: messageEditingId, roomId: id, doctorId: user ? user.doctor?.id : undefined, type: 'TEXT', content: text });
+    } else {
+      sendMessage({ roomId: id, doctorId: user ? user.doctor?.id : undefined, type: 'TEXT', content: text });
+    }
     setText('');
   };
 
@@ -344,22 +489,6 @@ export default function Room() {
     };
   }, [isTabFocused]);
 
-  const getSenderName = (user: User | null, message: Message, room: Room): string => {
-    if (user) {
-      return user.doctor?.id === message.doctorId ? 'Вы' : room.patientName;
-    }
-
-    return message.doctorId ? room.doctor.name : 'Вы';
-  };
-
-  const isMe = (user: User | null, message: Message): boolean => {
-    if (user) {
-      return user.doctor?.id === message.doctorId;
-    }
-
-    return !message.doctorId;
-  };
-
   if (!room) return null
 
   const isPatientConnected = ((typeof socket?.id === 'string' || typeof socket?.id === 'number') && onlineUsers.includes(socket.id))
@@ -433,50 +562,9 @@ export default function Room() {
 
         {isReady ? (
           <div onScroll={(e) => console.log(e)} className="flex-1 overflow-y-auto gap-1 flex flex-col px-4 pt-4">
-          {messages.map((m) => (
-            <div id={m.id} key={m.id} className={`border-b p-2 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, m) && 'bg-primary-50'}`}>
-              <div className="flex gap-2 items-center">
-                <div className="flex-1 flex items-center gap-1">
-                  {m.doctorId && (
-                    <Avatar src={m.doctor?.imageUrl} />
-                  )}
-                  <strong>{getSenderName(user, m, room)}:</strong>
-                </div>
-                <span className="text-xs">{moment(m.createdAt).format('DD.MM.YYYY HH:mm')}</span>
-              </div>
 
-              {m.type === 'TEXT' && (
-                <div className="whitespace-pre-wrap">{m.content}</div>
-              )}
-              {m.type === 'IMAGE' && (
-                <Link
-                  href={m.content}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-600 underline"
-                >
-                  <Image src={m.content} className="w-32 h-32 object-cover mt-1" alt="uploaded" />
-                </Link>
-              )}
-              {m.type === 'FILE' && (
-                <Link
-                  href={m.content}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-600 underline"
-                >
-                  Скачать файл
-                </Link>
-              )}
-
-              {m.type === 'AUDIO' && (
-                <audio controls className="mt-1">
-                  <source src={m.content} type="audio/mpeg" />
-                  <source src={m.content} type="audio/ogg" />
-                  <source src={m.content} type="audio/webm" />
-                </audio>
-              )}
-            </div>
+          {messages.map((item) => (
+            <Message key={item.id} item={item} room={room} onEdit={onEdit} />
           ))}
           <div className="min-h-[20px] flex">
             {isTyping && (
@@ -538,6 +626,8 @@ export default function Room() {
 
                 {!isAdmin && (
                   <Textarea
+                    isClearable={!!messageEditingId}
+                    onClear={onCancelEditing}
                     classNames={{ input: "max-h-[200px]", inputWrapper: "rounded-none" }}
                     ref={textareaRef}
                     value={text}
@@ -559,7 +649,7 @@ export default function Room() {
                 )}
 
                   <div className="flex gap-2 justify-end w-auto">
-                    {textareaRef.current?.value && (
+                    {text && (
                       <Button
                         isIconOnly
                         color="primary"

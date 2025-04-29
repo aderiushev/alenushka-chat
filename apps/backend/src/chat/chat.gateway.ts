@@ -78,6 +78,24 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       @ConnectedSocket() client: Socket,
   ) {
     const message = await this.chatService.createMessage(dto);
-    this.server.to(dto.roomId).emit('new-message', { message, clientId: client.id });
+    this.server.to(message.roomId).emit('new-message', { message, clientId: client.id });
+  }
+
+  @SubscribeMessage('edit-message')
+  async handleEditMessage(
+      @MessageBody() dto: Prisma.MessageUncheckedCreateInput,
+      @ConnectedSocket() client: Socket,
+  ) {
+    const message = await this.chatService.editMessage(dto);
+    this.server.to(message.roomId).emit('edited-message', { message, clientId: client.id });
+  }
+
+  @SubscribeMessage('delete-message')
+  async handleDeleteMessage(
+      @MessageBody() dto: Prisma.MessageUncheckedCreateInput,
+      @ConnectedSocket() client: Socket,
+  ) {
+    await this.chatService.deleteMessage(dto);
+    this.server.to(dto.roomId).emit('deleted-message', { id: dto.id, clientId: client.id });
   }
 }
