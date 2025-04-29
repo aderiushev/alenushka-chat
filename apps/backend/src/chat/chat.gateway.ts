@@ -74,8 +74,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('send-message')
   async handleSendMessage(
-      @MessageBody() dto: Prisma.MessageUncheckedCreateInput,
-      @ConnectedSocket() client: Socket,
+    @MessageBody() dto: Prisma.MessageUncheckedCreateInput,
+    @ConnectedSocket() client: Socket,
   ) {
     const message = await this.chatService.createMessage(dto);
     this.server.to(message.roomId).emit('new-message', { message, clientId: client.id });
@@ -83,18 +83,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('edit-message')
   async handleEditMessage(
-      @MessageBody() dto: Prisma.MessageUncheckedCreateInput,
-      @ConnectedSocket() client: Socket,
+    @MessageBody() dto: Prisma.MessageUncheckedCreateInput,
+    @ConnectedSocket() client: Socket,
   ) {
-    const message = await this.chatService.editMessage(dto);
-    this.server.to(message.roomId).emit('edited-message', { message, clientId: client.id });
+    const userId = this.getUserIdFromSocket(client);
+    const message = await this.chatService.getMessageById(dto.id);
+    if (Number(userId) !== message.doctor.userId) return;
+
+    const editedMessage = await this.chatService.editMessage(dto);
+    this.server.to(editedMessage.roomId).emit('edited-message', { message: editedMessage, clientId: client.id });
   }
 
   @SubscribeMessage('delete-message')
   async handleDeleteMessage(
-      @MessageBody() dto: Prisma.MessageUncheckedCreateInput,
-      @ConnectedSocket() client: Socket,
+    @MessageBody() dto: Prisma.MessageUncheckedCreateInput,
+    @ConnectedSocket() client: Socket,
   ) {
+    const userId = this.getUserIdFromSocket(client);
+    const message = await this.chatService.getMessageById(dto.id);
+    if (Number(userId) !== message.doctor.userId) return;
+
     await this.chatService.deleteMessage(dto);
     this.server.to(dto.roomId).emit('deleted-message', { id: dto.id, clientId: client.id });
   }

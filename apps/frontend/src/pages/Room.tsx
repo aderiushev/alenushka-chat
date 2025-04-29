@@ -127,21 +127,23 @@ const Message = (props: MessageProps) => {
 
         <div className="flex flex-col gap-2 items-end">
           <span className="text-xs">{moment(props.item.createdAt).format('DD.MM.YYYY HH:mm')}</span>
-          <Popover placement="right" isOpen={isMessagePopoverOpen} disableAnimation onClose={() => setIsMessagePopoverOpen(false)}>
-            <PopoverTrigger>
-              <Button isIconOnly className="bg-inherit" onClick={() => setIsMessagePopoverOpen(true)}>
-                <MoreIcon width={20} height={20} />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent>
-              <div className="px-1 py-2 flex flex-col gap-2">
-                {props.item.type === 'TEXT' && (
-                  <Button color="primary" className="text-small" onClick={onEdit}>Редактировать</Button>
-                )}
-                <Button color="danger" className="text-small" onClick={onDelete}>Удалить</Button>
-              </div>
-            </PopoverContent>
-          </Popover>
+          {isMe(user, props.item) && (
+            <Popover placement="right" isOpen={isMessagePopoverOpen} disableAnimation onClose={() => setIsMessagePopoverOpen(false)}>
+              <PopoverTrigger>
+                <Button isIconOnly className="bg-inherit" onClick={() => setIsMessagePopoverOpen(true)}>
+                  <MoreIcon width={20} height={20} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent>
+                <div className="px-1 py-2 flex flex-col gap-2">
+                  {props.item.type === 'TEXT' && (
+                    <Button color="primary" className="text-small" onClick={onEdit}>Редактировать</Button>
+                  )}
+                  <Button color="danger" className="text-small" onClick={onDelete}>Удалить</Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
         </div>
       </div>
 
@@ -243,7 +245,7 @@ export default function Room() {
         if (textareaRef.current) {
           textareaRef.current.focus();
         }
-      }, 0)
+      }, 250)
     }
   }
 
@@ -561,7 +563,7 @@ export default function Room() {
         </div>
 
         {isReady ? (
-          <div onScroll={(e) => console.log(e)} className="flex-1 overflow-y-auto gap-1 flex flex-col px-4 pt-4">
+          <div className="flex-1 overflow-y-auto gap-1 flex flex-col px-4 pt-4">
 
           {messages.map((item) => (
             <Message key={item.id} item={item} room={room} onEdit={onEdit} />

@@ -63,10 +63,18 @@ let ChatGateway = class ChatGateway {
         this.server.to(message.roomId).emit('new-message', { message, clientId: client.id });
     }
     async handleEditMessage(dto, client) {
-        const message = await this.chatService.editMessage(dto);
-        this.server.to(message.roomId).emit('edited-message', { message, clientId: client.id });
+        const userId = this.getUserIdFromSocket(client);
+        const message = await this.chatService.getMessageById(dto.id);
+        if (Number(userId) !== message.doctor.userId)
+            return;
+        const editedMessage = await this.chatService.editMessage(dto);
+        this.server.to(editedMessage.roomId).emit('edited-message', { message: editedMessage, clientId: client.id });
     }
     async handleDeleteMessage(dto, client) {
+        const userId = this.getUserIdFromSocket(client);
+        const message = await this.chatService.getMessageById(dto.id);
+        if (Number(userId) !== message.doctor.userId)
+            return;
         await this.chatService.deleteMessage(dto);
         this.server.to(dto.roomId).emit('deleted-message', { id: dto.id, clientId: client.id });
     }

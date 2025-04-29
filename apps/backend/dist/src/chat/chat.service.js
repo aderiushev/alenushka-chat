@@ -62,6 +62,14 @@ let ChatService = class ChatService {
             },
         });
     }
+    async getMessageById(id) {
+        return this.prisma.message.findUnique({
+            where: { id },
+            include: {
+                doctor: true,
+            },
+        });
+    }
 };
 exports.ChatService = ChatService;
 exports.ChatService = ChatService = __decorate([

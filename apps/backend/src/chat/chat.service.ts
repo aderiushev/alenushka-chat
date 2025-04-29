@@ -58,4 +58,13 @@ export class ChatService {
       },
     });
   }
+
+  async getMessageById(id: string) {
+    return this.prisma.message.findUnique({
+      where: { id },
+      include: {
+        doctor: true,
+      },
+    });
+  }
 }

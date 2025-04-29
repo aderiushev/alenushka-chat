@@ -19,8 +19,6 @@ export default function Login() {
     e.preventDefault();
     const user = await login(email, password);
 
-    console.log('debug uuuu', user, roomId, doctorId)
-
     if (user) {
       if (roomId && doctorId) {
         navigate(`/room/${roomId}?doctorId=${doctorId}`);
