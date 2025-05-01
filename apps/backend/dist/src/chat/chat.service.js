@@ -46,16 +46,19 @@ let ChatService = class ChatService {
         });
     }
     async deleteMessage(data) {
-        await this.prisma.message.delete({
+        await this.prisma.message.update({
             where: {
                 id: data.id,
+            },
+            data: {
+                status: 'deleted'
             }
         });
         return data.id;
     }
     async getMessagesForRoom(roomId) {
         return this.prisma.message.findMany({
-            where: { roomId },
+            where: { roomId, status: 'active' },
             orderBy: { createdAt: 'asc' },
             include: {
                 doctor: true,

@@ -40,9 +40,12 @@ export class ChatService {
   }
 
   async deleteMessage(data: Prisma.MessageUncheckedCreateInput) {
-    await this.prisma.message.delete({
+    await this.prisma.message.update({
       where: {
         id: data.id,
+      },
+      data: {
+        status: 'deleted'
       }
     });
 
@@ -51,7 +54,7 @@ export class ChatService {
 
   async getMessagesForRoom(roomId: string) {
     return this.prisma.message.findMany({
-      where: { roomId },
+      where: { roomId, status: 'active' },
       orderBy: { createdAt: 'asc' },
       include: {
         doctor: true,

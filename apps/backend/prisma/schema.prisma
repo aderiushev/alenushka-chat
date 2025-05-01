@@ -24,6 +24,7 @@ model Message {
   room      Room      @relation(fields: [roomId], references: [id])
   type      String
   content   String
+  status    String @default("active")
   createdAt DateTime  @default(now())
   doctorId  Int?
   doctor    Doctor?   @relation("DoctorMessages", fields: [doctorId], references: [id], onDelete: Cascade)
