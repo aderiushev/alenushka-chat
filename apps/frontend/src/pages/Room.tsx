@@ -550,12 +550,23 @@ export default function Room() {
               </div>
               {doctor && (
                 <div className="flex gap-2 items-center">
-                  <Avatar className="w-[60px] h-[60px]" src={doctor.imageUrl} />
-                  <div className="flex flex-col gap-0.5">
-                    <div className="text-xs">{doctor.name}</div>
-                    <div className="text-xs">{doctor.description}</div>
-                    <Link className="text-xs" target="_blank" href={doctor.externalUrl}>Описание</Link>
+                  <div className="flex gap-1 flex-1">
+                    <Avatar className="w-[60px] h-[60px]" src={doctor.imageUrl} />
+                    <div className="flex flex-col gap-0.5">
+                      <div className="text-xs">{doctor.name}</div>
+                      <div className="text-xs">{doctor.description}</div>
+                      <Link className="text-xs" target="_blank" href={doctor.externalUrl}>Описание</Link>
+                    </div>
                   </div>
+                  {isCanEnd && (
+                    <Button
+                      isIconOnly
+                      color="danger"
+                      onPress={handleEnd}
+                    >
+                      <CloseIcon width={20} height={20} fill="#fff" />
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -628,9 +639,12 @@ export default function Room() {
 
                 {!isAdmin && (
                   <Textarea
+                    spellCheck="false"
+                    autoCapitalize="off"
+                    autoCorrect="off"
                     isClearable={!!messageEditingId}
                     onClear={onCancelEditing}
-                    classNames={{ input: "max-h-[200px]", inputWrapper: "rounded-none" }}
+                    classNames={{ input: "max-h-[100%]", inputWrapper: "rounded-none" }}
                     ref={textareaRef}
                     value={text}
                     onChange={(e) => {
@@ -658,16 +672,6 @@ export default function Room() {
                         onPress={handleSend}
                       >
                         <SendIcon width={20} height={20} fill="#fff" />
-                      </Button>
-                    )}
-
-                    {isCanEnd && (
-                      <Button
-                        isIconOnly
-                        color="danger"
-                        onPress={handleEnd}
-                      >
-                        <CloseIcon width={20} height={20} fill="#fff" />
                       </Button>
                     )}
 
