@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from './jwt.service';
 import * as bcrypt from 'bcryptjs';
+import {Prisma} from "@prisma/client";
 
 @Injectable()
 export class AuthService {
@@ -19,5 +20,18 @@ export class AuthService {
       throw new UnauthorizedException();
     }
     return { token: this.jwtService.sign(user) };
+  }
+
+  async update(id: number, payload: Prisma.UserUncheckedUpdateInput) {
+    const user = await this.prisma.user.update({
+      where: { id },
+      data: {
+        fcmToken: payload.fcmToken
+      }
+    });
+
+    return {
+      user
+    }
   }
 }

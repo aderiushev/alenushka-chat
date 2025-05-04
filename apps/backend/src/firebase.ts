@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import * as serviceAccount from './alenushka-chat-eaa6a-firebase-adminsdk-fbsvc-a8ea290eb0.json';
+import serviceAccount from './alenushka-chat-eaa6a-firebase-adminsdk-fbsvc-dee8f31cb8.json';
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),

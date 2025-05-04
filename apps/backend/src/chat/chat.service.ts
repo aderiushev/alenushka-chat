@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import * as admin from 'firebase-admin';
 
 @Injectable()
 export class ChatService {
@@ -10,6 +11,36 @@ export class ChatService {
     const message = await this.prisma.message.create({
       data
     });
+
+    const room = await this.prisma.room.findUnique({
+      where: { id: data.roomId },
+      include: {
+        doctor: {
+          include: {
+            user: true
+          }
+        }
+      }
+    });
+
+    if (!message.doctorId && room?.doctor?.user?.fcmToken) {
+      try {
+        await admin.messaging().send({
+          token: room.doctor.user.fcmToken,
+          notification: {
+            title: 'Новое сообщение',
+            body: `от ${room.patientName}`
+          },
+          data: {
+            roomId: data.roomId,
+            type: 'new_message'
+          }
+        });
+      } catch (error) {
+        console.error('Failed to send push notification:', error);
+      }
+    }
+
 
     return this.prisma.message.findFirst({
       where: {

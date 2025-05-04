@@ -32,12 +32,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.bucket = void 0;
 const admin = __importStar(require("firebase-admin"));
-const serviceAccount = __importStar(require("./alenushka-chat-eaa6a-firebase-adminsdk-fbsvc-a8ea290eb0.json"));
+const alenushka_chat_eaa6a_firebase_adminsdk_fbsvc_dee8f31cb8_json_1 = __importDefault(require("./alenushka-chat-eaa6a-firebase-adminsdk-fbsvc-dee8f31cb8.json"));
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert(alenushka_chat_eaa6a_firebase_adminsdk_fbsvc_dee8f31cb8_json_1.default),
     storageBucket: 'alenushka-chat-eaa6a.firebasestorage.app',
 });
 exports.bucket = admin.storage().bucket();

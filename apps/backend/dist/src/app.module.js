@@ -14,6 +14,7 @@ const prisma_service_1 = require("./prisma/prisma.service");
 const rooms_module_1 = require("./rooms/rooms.module");
 const upload_controller_1 = require("./upload/upload.controller");
 const auth_module_1 = require("./auth/auth.module");
+require("./firebase");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;

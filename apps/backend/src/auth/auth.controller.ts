@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, UseGuards, Req, Param } from '@nestjs/common';
+import { Body, Controller, Post, Get, UseGuards, Req, Param, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {Roles} from "./roles.decorator";
@@ -50,5 +50,16 @@ export class AuthController {
       include: { user: true },
     });
   }
-}
 
+  @Post('update-fcm-token')
+  async updateFcmToken(
+    @Req() req: Request,
+    @Body() body: { fcmToken: string }
+  ) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader.split(' ')[1];
+    const user = this.jwtService.verify(token);
+
+    return this.authService.update(Number(user.sub), { fcmToken: body.fcmToken });
+  }
+}

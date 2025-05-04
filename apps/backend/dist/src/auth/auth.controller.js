@@ -53,6 +53,12 @@ let AuthController = class AuthController {
             include: { user: true },
         });
     }
+    async updateFcmToken(req, body) {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader.split(' ')[1];
+        const user = this.jwtService.verify(token);
+        return this.authService.update(Number(user.sub), { fcmToken: body.fcmToken });
+    }
 };
 exports.AuthController = AuthController;
 __decorate([
@@ -91,6 +97,14 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "getDoctorById", null);
+__decorate([
+    (0, common_1.Post)('update-fcm-token'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Request, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "updateFcmToken", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService, prisma_service_1.PrismaService, jwt_service_1.JwtService])

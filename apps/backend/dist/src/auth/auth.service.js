@@ -64,6 +64,17 @@ let AuthService = class AuthService {
         }
         return { token: this.jwtService.sign(user) };
     }
+    async update(id, payload) {
+        const user = await this.prisma.user.update({
+            where: { id },
+            data: {
+                fcmToken: payload.fcmToken
+            }
+        });
+        return {
+            user
+        };
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
