@@ -10,10 +10,11 @@ import {Textarea} from "@heroui/input";
 import {
   Avatar,
   Button,
-  Checkbox, Image,
+  Checkbox,
   Link,
   Modal,
   ModalBody,
+  Image,
   ModalContent, Popover, PopoverContent, PopoverTrigger,
 } from "@heroui/react";
 // @ts-ignore
@@ -86,13 +87,15 @@ const Message = (props: MessageProps) => {
   const { user } = useUser();
 
   const getSenderName = (user: User | null, message: Message): string => {
-    if (props.room) {
-      if (user) {
+    if (user) {
+      if (user.role === 'doctor') {
         return user.doctor?.id === message.doctorId ? 'Вы' : props.room.patientName;
+      } else if (user.role === 'admin') {
+        return props.room.doctor.id === message.doctorId ? props.room.doctor.name : props.room.patientName;
       }
-
-      return message.doctorId ? props.room.doctor.name : 'Вы';
     }
+
+    return message.doctorId ? props.room.doctor.name : 'Вы';
 
     return '';
   };
@@ -117,8 +120,8 @@ const Message = (props: MessageProps) => {
 
   return (
     <div key={props.item.id} className={`border-b p-2 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, props.item) && 'bg-primary-50'}`}>
-      <div className="flex gap-2 items-center">
-        <div className="flex-1 flex items-center gap-1">
+      <div className="flex gap-2 items-center min-h-[64px]">
+        <div className="flex-1 flex items-center gap-2">
           {props.item.doctorId && (
             <Avatar src={props.item.doctor?.imageUrl} />
           )}
@@ -157,7 +160,11 @@ const Message = (props: MessageProps) => {
           rel="noreferrer"
           className="text-blue-600 underline"
         >
-          <Image src={props.item.content} className="w-32 h-32 object-cover mt-1" alt="uploaded" />
+          <Image
+            src={props.item.content}
+            className="w-32 h-32 object-cover mt-1"
+            alt="uploaded image"
+          />
         </Link>
       )}
       {props.item.type === 'FILE' && (
@@ -244,6 +251,7 @@ export default function Room() {
       setTimeout(() => {
         if (textareaRef.current) {
           textareaRef.current.focus();
+          textareaRef.current.setSelectionRange(item.content.length, item.content.length);
         }
       }, 250)
     }
@@ -479,7 +487,7 @@ export default function Room() {
 
         let visible = false;
         flickerInterval.current = setInterval(() => {
-          document.title = visible ? '(New message)' : originalTitle.current;
+          document.title = visible ? '(Новое сообщение)' : originalTitle.current;
           visible = !visible;
         }, 1000);
       }
@@ -535,7 +543,7 @@ export default function Room() {
                   <span className="text-center text-xl font-semibold">Он-лайн консультация</span>
                 </div>
 
-                <span className="flex flex-col gap-1 sm:flex-row">
+                <span className="flex flex-col gap-2 sm:flex-row">
                   <span className="flex items-center gap-1">
                     <span className={`flex w-3 h-3 rounded-full ${isPatientConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                     <span>{user ? room.patientName : 'Вы'}</span>
@@ -550,7 +558,7 @@ export default function Room() {
               </div>
               {doctor && (
                 <div className="flex gap-2 items-center">
-                  <div className="flex gap-1 flex-1">
+                  <div className="flex gap-2 flex-1">
                     <Avatar className="w-[60px] h-[60px]" src={doctor.imageUrl} />
                     <div className="flex flex-col gap-0.5">
                       <div className="text-xs">{doctor.name}</div>
@@ -639,9 +647,6 @@ export default function Room() {
 
                 {!isAdmin && (
                   <Textarea
-                    spellCheck="false"
-                    autoCapitalize="off"
-                    autoCorrect="off"
                     isClearable={!!messageEditingId}
                     onClear={onCancelEditing}
                     classNames={{ input: "max-h-[100%]", inputWrapper: "rounded-none" }}
