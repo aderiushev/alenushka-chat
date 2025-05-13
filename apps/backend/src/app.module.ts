@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import * as path from 'path';
+import { ConfigModule } from '@nestjs/config';
 import { ChatGateway } from './chat/chat.gateway';
 import { ChatService } from './chat/chat.service';
 import { PrismaService } from './prisma/prisma.service';
@@ -8,7 +10,10 @@ import { AuthModule } from "./auth/auth.module";
 import './firebase';
 
 @Module({
-  imports: [AuthModule, RoomsModule],
+  imports: [AuthModule, RoomsModule, ConfigModule.forRoot({
+    isGlobal: true,
+    envFilePath: path.resolve(__dirname, '..', '..', '.env'),
+  })],
   controllers: [UploadController],
   providers: [ChatGateway, ChatService, PrismaService],
 })

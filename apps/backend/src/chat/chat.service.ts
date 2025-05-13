@@ -26,7 +26,7 @@ export class ChatService {
     if (!message.doctorId && room?.doctor?.user?.fcmToken) {
       try {
         await admin.messaging().send({
-          token: room.doctor.user.fcmToken,
+          token: 'ezEuVf8reEbxgqegu9RdYk:APA91bGfmvmwXa8CAlV7AIC1bSQApLF9_4h6ld9ZuTidtK5RjO5TvFLpsuPKmxNi3rJo5wc6vCqmHd_h_KzG5sdp5bLER2rCspAfDOr-TiY14TJA1HbnMis',
           notification: {
             title: 'Новое сообщение',
             body: `от ${room.patientName}`

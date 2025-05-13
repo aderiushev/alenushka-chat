@@ -14,17 +14,19 @@ const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const passport_jwt_1 = require("passport-jwt");
 const prisma_service_1 = require("../prisma/prisma.service");
+const config_1 = require("@nestjs/config");
 let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
-    constructor(prisma) {
-        const jwtSecret = process.env.JWT_SECRET;
+    constructor(prisma, configService) {
+        const jwtSecret = configService.get('JWT_SECRET');
         if (!jwtSecret) {
             throw new Error('JWT_SECRET is not defined in environment variables');
         }
         super({
             jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
-            secretOrKey: jwtSecret, // Ensure JWT_SECRET is defined
+            secretOrKey: jwtSecret,
         });
         this.prisma = prisma;
+        this.configService = configService;
     }
     async validate(payload) {
         const user = await this.prisma.user.findUnique({ where: { id: Number(payload.sub) } });
@@ -37,5 +39,6 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
 exports.JwtStrategy = JwtStrategy;
 exports.JwtStrategy = JwtStrategy = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        config_1.ConfigService])
 ], JwtStrategy);
