@@ -392,9 +392,19 @@ export default function Room() {
     if (!text.trim() || !id) return;
 
     if (messageEditingId) {
-      editMessage({ id: messageEditingId, roomId: id, doctorId: user ? user.doctor?.id : undefined, type: 'TEXT', content: text });
+      // For editing, we need to include the message ID
+      editMessage(messageEditingId, {
+        content: text
+      });
+      setMessageEditingId(null);
     } else {
-      sendMessage({ roomId: id, doctorId: user ? user.doctor?.id : undefined, type: 'TEXT', content: text });
+      // For new messages, we don't include an ID
+      sendMessage({
+        roomId: id,
+        doctorId: user ? user.doctor?.id : undefined,
+        type: 'TEXT',
+        content: text
+      });
     }
     setText('');
   };

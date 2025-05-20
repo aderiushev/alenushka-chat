@@ -1,10 +1,11 @@
 import io from 'socket.io-client';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import _ from 'lodash';
 
 interface PendingMessage {
   id: string;
-  message: Omit<Message, 'id' | 'createdAt'>;
+  message: Message;
   type: 'new' | 'edit' | 'delete';
   timestamp: number;
 }
@@ -16,7 +17,7 @@ interface SocketState {
   isConnected: boolean;
   connect: (roomId: string) => void;
   sendMessage: (message: Omit<Message, 'id' | 'createdAt'>) => void;
-  editMessage: (message: Omit<Message, 'createdAt'>) => void;
+  editMessage: (id: string, updates: Partial<Omit<Message, 'id' | 'createdAt'>>) => void;
   deleteMessage: (message: Message) => void;
   removePendingMessage: (id: string) => void;
   processPendingMessages: () => void;
@@ -145,15 +146,18 @@ export const useSocketStore = create<SocketState>()(
         // Add to pending messages
         const pendingMessage: PendingMessage = {
           id: pendingId,
-          message: msg,
+          message: {
+            ...msg,
+            id: pendingId,
+            createdAt: new Date().toISOString(),
+          },
           type: 'new',
           timestamp: Date.now(),
         };
 
-        // Add to UI with pending status
         const tempMessage: Message = {
-          id: pendingId,
           ...msg,
+          id: pendingId,
           createdAt: new Date().toISOString(),
           pending: true,
         };
@@ -172,7 +176,6 @@ export const useSocketStore = create<SocketState>()(
               get().removePendingMessage(pendingId);
 
               // Update the temporary message with the real one
-              // We don't need to add the message again as it will come through the 'new-message' event
               set((state) => ({
                 messages: state.messages.map(m =>
                   m.id === pendingId ? { ...response.message, pending: false } : m
@@ -187,14 +190,42 @@ export const useSocketStore = create<SocketState>()(
           console.log('Socket not connected, message queued:', pendingId);
         }
       },
-      editMessage: (msg) => {
+      editMessage: (id: string, updates: Partial<Omit<Message, 'id' | 'createdAt'>>) => {
         const socket = get().socket;
         const pendingId = `pending_edit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        // Find the original message to merge with updates
+        const originalMessage = get().messages.find(m => m.id === id);
+        if (!originalMessage) {
+          console.error('Cannot edit message: original message not found', id);
+          return;
+        }
+
+        // Only allow editing your own messages
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const isOwnMessage =
+          (!originalMessage.doctorId && user.role !== 'doctor') ||
+          (originalMessage.doctorId && user.doctor?.id === originalMessage.doctorId);
+
+        if (!isOwnMessage) {
+          console.error('Cannot edit message: not authorized');
+          return;
+        }
+
+        // Create a minimal update payload with only the fields that can be updated
+        const updatePayload = {
+          id, // Required for identifying the message
+          content: updates.content || originalMessage.content, // Only update content
+        };
 
         // Add to pending messages
         const pendingMessage: PendingMessage = {
           id: pendingId,
-          message: msg,
+          message: {
+            ...originalMessage,
+            ...updates,
+            id,
+          },
           type: 'edit',
           timestamp: Date.now(),
         };
@@ -203,13 +234,13 @@ export const useSocketStore = create<SocketState>()(
         set((state) => ({
           pendingMessages: [...state.pendingMessages, pendingMessage],
           messages: state.messages.map(m =>
-            m.id === msg.id ? { ...m, ...msg, pending: true } : m
+            m.id === id ? { ...m, ...updates, pending: true } : m
           )
         }));
 
         if (socket && get().isConnected) {
-          console.log('Editing message:', msg.id);
-          socket.emit('edit-message', msg, (response: any) => {
+          console.log('Editing message:', id, updatePayload);
+          socket.emit('edit-message', updatePayload, (response: any) => {
             if (response && response.success) {
               console.log('Message edited successfully:', response.message.id);
               get().removePendingMessage(pendingId);
@@ -217,12 +248,17 @@ export const useSocketStore = create<SocketState>()(
               // Update with the confirmed message from server
               set((state) => ({
                 messages: state.messages.map(m =>
-                  m.id === msg.id ? { ...response.message, pending: false } : m
+                  m.id === id ? { ...response.message, pending: false } : m
                 )
               }));
             } else {
               console.error('Failed to edit message:', response?.error || 'Unknown error');
-              // Keep in pending state for retry
+              // Remove pending status on error
+              set((state) => ({
+                messages: state.messages.map(m =>
+                  m.id === id ? { ...m, pending: false } : m
+                )
+              }));
             }
           });
         } else {
@@ -291,7 +327,10 @@ export const useSocketStore = create<SocketState>()(
 
           switch (pending.type) {
             case 'new':
-              socket.emit('send-message', pending.message, (response: any) => {
+              // For new messages, we don't send the temporary ID to the server
+              const newMessageData = _.omit(pending.message, ['id', 'createdAt', 'pending']);
+
+              socket.emit('send-message', newMessageData, (response: any) => {
                 if (response && response.success) {
                   console.log('Pending message sent successfully:', response.message.id);
                   get().removePendingMessage(pending.id);
@@ -309,7 +348,13 @@ export const useSocketStore = create<SocketState>()(
               break;
 
             case 'edit':
-              socket.emit('edit-message', pending.message, (response: any) => {
+              // For edit messages, only send the minimal required fields
+              const editPayload = {
+                id: pending.message.id,
+                content: pending.message.content,
+              };
+
+              socket.emit('edit-message', editPayload, (response: any) => {
                 if (response && response.success) {
                   console.log('Pending edit processed successfully:', response.message.id);
                   get().removePendingMessage(pending.id);

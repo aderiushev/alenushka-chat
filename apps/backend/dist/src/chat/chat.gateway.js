@@ -78,9 +78,6 @@ let ChatGateway = class ChatGateway {
             if (!message) {
                 return { success: false, error: 'Message not found' };
             }
-            if (Number(userId) !== message.doctor.userId) {
-                return { success: false, error: 'Unauthorized' };
-            }
             const editedMessage = await this.chatService.editMessage(dto);
             this.server.to(editedMessage.roomId).emit('edited-message', { message: editedMessage, clientId: client.id });
             return { success: true, message: editedMessage };
