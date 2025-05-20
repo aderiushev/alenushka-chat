@@ -26,6 +26,8 @@ declare global {
     roomId: string;
     doctor?: Doctor
     doctorId?: number
+    pending?: boolean;
+    pendingDelete?: boolean;
   }
 
   type Room = {

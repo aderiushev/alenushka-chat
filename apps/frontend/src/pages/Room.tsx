@@ -83,7 +83,6 @@ type MessageProps = {
 const Message = (props: MessageProps) => {
   const deleteMessage = useSocketStore((s) => s.deleteMessage);
   const [isMessagePopoverOpen, setIsMessagePopoverOpen] = useState(false)
-
   const { user } = useUser();
 
   const getSenderName = (user: User | null, message: Message): string => {
@@ -96,8 +95,6 @@ const Message = (props: MessageProps) => {
     }
 
     return message.doctorId ? props.room.doctor.name : 'Вы';
-
-    return '';
   };
 
   const isMe = (user: User | null, message: Message): boolean => {
@@ -119,18 +116,23 @@ const Message = (props: MessageProps) => {
   }
 
   return (
-    <div key={props.item.id} className={`border-b p-2 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, props.item) && 'bg-primary-50'}`}>
+    <div key={props.item.id} className={`border-b p-2 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, props.item) && 'bg-primary-50'} ${props.item.pending ? 'opacity-70' : ''}`}>
       <div className="flex gap-2 items-center min-h-[64px]">
         <div className="flex-1 flex items-center gap-2">
           {props.item.doctorId && (
             <Avatar src={props.item.doctor?.imageUrl} />
           )}
           <strong>{getSenderName(user, props.item)}:</strong>
+          {props.item.pending && (
+            <span className="text-xs text-amber-600">
+              {props.item.pendingDelete ? 'Удаление...' : 'Отправка...'}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-col gap-2 items-end">
           <span className="text-xs">{moment(props.item.createdAt).format('DD.MM.YYYY HH:mm')}</span>
-          {isMe(user, props.item) && (
+          {isMe(user, props.item) && !props.item.pendingDelete && (
             <Popover placement="right" isOpen={isMessagePopoverOpen} disableAnimation onClose={() => setIsMessagePopoverOpen(false)}>
               <PopoverTrigger>
                 <Button isIconOnly className="bg-inherit" onClick={() => setIsMessagePopoverOpen(true)}>

@@ -59,24 +59,56 @@ let ChatGateway = class ChatGateway {
         client.emit('initial-messages', messages);
     }
     async handleSendMessage(dto, client) {
-        const message = await this.chatService.createMessage(dto);
-        this.server.to(message.roomId).emit('new-message', { message, clientId: client.id });
+        try {
+            console.log('Received send-message:', dto.roomId);
+            const message = await this.chatService.createMessage(dto);
+            this.server.to(message.roomId).emit('new-message', { message, clientId: client.id });
+            return { success: true, message };
+        }
+        catch (error) {
+            console.error('Error sending message:', error);
+            return { success: false, error: error.message };
+        }
     }
     async handleEditMessage(dto, client) {
-        const userId = this.getUserIdFromSocket(client);
-        const message = await this.chatService.getMessageById(dto.id);
-        if (Number(userId) !== message.doctor.userId)
-            return;
-        const editedMessage = await this.chatService.editMessage(dto);
-        this.server.to(editedMessage.roomId).emit('edited-message', { message: editedMessage, clientId: client.id });
+        try {
+            console.log('Received edit-message:', dto.id);
+            const userId = this.getUserIdFromSocket(client);
+            const message = await this.chatService.getMessageById(dto.id);
+            if (!message) {
+                return { success: false, error: 'Message not found' };
+            }
+            if (Number(userId) !== message.doctor.userId) {
+                return { success: false, error: 'Unauthorized' };
+            }
+            const editedMessage = await this.chatService.editMessage(dto);
+            this.server.to(editedMessage.roomId).emit('edited-message', { message: editedMessage, clientId: client.id });
+            return { success: true, message: editedMessage };
+        }
+        catch (error) {
+            console.error('Error editing message:', error);
+            return { success: false, error: error.message };
+        }
     }
     async handleDeleteMessage(dto, client) {
-        const userId = this.getUserIdFromSocket(client);
-        const message = await this.chatService.getMessageById(dto.id);
-        if (Number(userId) !== message.doctor.userId)
-            return;
-        await this.chatService.deleteMessage(dto);
-        this.server.to(dto.roomId).emit('deleted-message', { id: dto.id, clientId: client.id });
+        try {
+            console.log('Received delete-message:', dto.id);
+            const userId = this.getUserIdFromSocket(client);
+            const message = await this.chatService.getMessageById(dto.id);
+            if (!message) {
+                return { success: false, error: 'Message not found' };
+            }
+            if (Number(userId) !== message.doctor.userId) {
+                return { success: false, error: 'Unauthorized' };
+            }
+            await this.chatService.deleteMessage(dto);
+            this.server.to(dto.roomId).emit('deleted-message', { id: dto.id, clientId: client.id });
+            return { success: true };
+        }
+        catch (error) {
+            console.error('Error deleting message:', error);
+            return { success: false, error: error.message };
+        }
     }
 };
 exports.ChatGateway = ChatGateway;
