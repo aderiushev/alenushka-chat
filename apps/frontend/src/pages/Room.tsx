@@ -195,6 +195,7 @@ export default function Room() {
   const { id } = useParams();
   const connect = useSocketStore((s) => s.connect);
   const messages = useSocketStore((s) => s.messages);
+  const setCurrentUser = useSocketStore((s) => s.setCurrentUser);
   const [onlineUsers, setOnlineUsers] = useState<(string | number)[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [isTabFocused, setIsTabFocused] = useState(true);
@@ -262,6 +263,11 @@ export default function Room() {
   useEffect(() => {
     if (id) connect(id);
   }, [id, connect]);
+
+  // Update current user in socket store when user changes
+  useEffect(() => {
+    setCurrentUser(user);
+  }, [user, setCurrentUser]);
 
   useEffect(() => {
     if (!socket) return;
@@ -395,7 +401,7 @@ export default function Room() {
       // For editing, we need to include the message ID
       editMessage(messageEditingId, {
         content: text
-      });
+      }, user);
       setMessageEditingId(null);
     } else {
       // For new messages, we don't include an ID
@@ -674,10 +680,8 @@ export default function Room() {
                         handleSend();
                       }
                     }}
-                    rows={4}
                     placeholder="Введите сообщение"
                     size="lg"
-                    disableAutosize
                   />
                 )}
 

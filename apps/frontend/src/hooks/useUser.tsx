@@ -20,10 +20,14 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
     api
       .get("/auth/me")
-      .then((res) => setUser(res.data))
+      .then((res) => {
+        setUser(res.data);
+        localStorage.setItem('user', JSON.stringify(res.data));
+      })
       .catch(() => {
         setUser(null);
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -31,6 +35,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
   };
 
   const login = async (email: string, password: string) => {
@@ -38,6 +43,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('token', res.data.token);
     const me = await api.get('/auth/me');
     setUser(me.data);
+    localStorage.setItem('user', JSON.stringify(me.data));
 
     return me.data;
   };

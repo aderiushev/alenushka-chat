@@ -15,21 +15,24 @@ interface SocketState {
   messages: Message[];
   pendingMessages: PendingMessage[];
   isConnected: boolean;
+  currentUser: User | null;
   connect: (roomId: string) => void;
   sendMessage: (message: Omit<Message, 'id' | 'createdAt'>) => void;
-  editMessage: (id: string, updates: Partial<Omit<Message, 'id' | 'createdAt'>>) => void;
+  editMessage: (id: string, updates: Partial<Omit<Message, 'id' | 'createdAt'>>, user?: User | null) => void;
   deleteMessage: (message: Message) => void;
   removePendingMessage: (id: string) => void;
   processPendingMessages: () => void;
+  setCurrentUser: (user: User | null) => void;
 }
 
 export const useSocketStore = create<SocketState>()(
-  persist(
+  persist<SocketState>(
     (set, get) => ({
       socket: null,
       messages: [],
       pendingMessages: [],
       isConnected: false,
+      currentUser: null,
       connect: (roomId: string) => {
         const existingSocket = get().socket;
         const token = localStorage.getItem('token');
@@ -190,7 +193,7 @@ export const useSocketStore = create<SocketState>()(
           console.log('Socket not connected, message queued:', pendingId);
         }
       },
-      editMessage: (id: string, updates: Partial<Omit<Message, 'id' | 'createdAt'>>) => {
+      editMessage: (id: string, updates: Partial<Omit<Message, 'id' | 'createdAt'>>, user?: User | null) => {
         const socket = get().socket;
         const pendingId = `pending_edit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -201,14 +204,34 @@ export const useSocketStore = create<SocketState>()(
           return;
         }
 
+        // Use provided user or get from store, fallback to localStorage
+        let currentUser = user || get().currentUser;
+        if (!currentUser) {
+          try {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+              currentUser = JSON.parse(storedUser);
+            }
+          } catch (e) {
+            console.error('Failed to parse stored user:', e);
+          }
+        }
+
+        if (!currentUser) {
+          console.error('Cannot edit message: user not found');
+          return;
+        }
+
         // Only allow editing your own messages
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
         const isOwnMessage =
-          (!originalMessage.doctorId && user.role !== 'doctor') ||
-          (originalMessage.doctorId && user.doctor?.id === originalMessage.doctorId);
+          (originalMessage.doctorId && currentUser.doctor?.id === originalMessage.doctorId) ||
+          (!originalMessage.doctorId && currentUser.role !== 'doctor');
 
         if (!isOwnMessage) {
-          console.error('Cannot edit message: not authorized');
+          console.error('Cannot edit message: not authorized', {
+            originalMessage: { id: originalMessage.id, doctorId: originalMessage.doctorId },
+            currentUser: { id: currentUser.id, role: currentUser.role, doctorId: currentUser.doctor?.id }
+          });
           return;
         }
 
@@ -388,13 +411,26 @@ export const useSocketStore = create<SocketState>()(
               break;
           }
         });
+      },
+      setCurrentUser: (user: User | null) => {
+        set({ currentUser: user });
       }
     }),
     {
       name: 'socket-store',
       partialize: (state) => ({
+        socket: null,
+        messages: [],
         pendingMessages: state.pendingMessages,
-        // Don't persist socket or messages
+        isConnected: false,
+        currentUser: state.currentUser,
+        connect: state.connect,
+        sendMessage: state.sendMessage,
+        editMessage: state.editMessage,
+        deleteMessage: state.deleteMessage,
+        removePendingMessage: state.removePendingMessage,
+        processPendingMessages: state.processPendingMessages,
+        setCurrentUser: state.setCurrentUser,
       }),
     }
   )
