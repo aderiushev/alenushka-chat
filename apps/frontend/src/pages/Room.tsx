@@ -309,12 +309,12 @@ export default function Room() {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
-  }, [text]);
+  // useEffect(() => {
+  //   if (textareaRef.current) {
+  //     textareaRef.current.style.height = 'auto';
+  //     textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+  //   }
+  // }, [text]);
 
   const handleStartRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -665,6 +665,8 @@ export default function Room() {
 
                 {!isAdmin && (
                   <Textarea
+                    minRows={4}
+                    maxRows={20}
                     isClearable={!!messageEditingId}
                     onClear={onCancelEditing}
                     classNames={{ input: "max-h-[100%]", inputWrapper: "rounded-none" }}
