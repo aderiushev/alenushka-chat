@@ -228,6 +228,7 @@ export default function Room() {
     3: false
   })
   const [isAgreed, setIsAgreed] = useState<boolean>(!!localStorage.getItem('isAgreed'));
+  const [isMobileKeyboardVisible, setIsMobileKeyboardVisible] = useState(false);
   const isReady = !!user || isAgreed;
 
   useNavigationBlock(textareaRef);
@@ -310,45 +311,56 @@ export default function Room() {
     scrollToBottom();
   }, [messages]);
 
-  // Auto-scroll when textarea content changes (grows/shrinks)
+  // Mobile-optimized auto-scroll for textarea changes
   useEffect(() => {
-    // Only scroll if there are messages and user is ready (footer is visible)
+    // Only scroll if there are messages and user is ready
     if (messages.length > 0 && isReady) {
-      // Use a small delay to ensure the textarea has finished resizing
+      // Debounced scroll to prevent excessive scrolling during typing
       const timeoutId = setTimeout(() => {
         scrollToBottom();
-      }, 100);
+      }, 200);
 
       return () => clearTimeout(timeoutId);
     }
-  }, [text, messages.length]);
+  }, [text.length > 0 ? Math.ceil(text.length / 50) : 0, isReady, messages.length]); // Less frequent updates
 
-  // Additional scroll trigger for mobile virtual keyboard changes
+  // Mobile virtual keyboard handling with Visual Viewport API
   useEffect(() => {
-    const handleResize = () => {
-      // Only scroll if there are messages and user is ready
-      if (messages.length > 0 && isReady) {
-        // Delay to allow for virtual keyboard animation
-        setTimeout(() => {
-          scrollToBottom();
-        }, 300);
+    let keyboardTimeout: NodeJS.Timeout;
+
+    const handleVisualViewportChange = () => {
+      if (!window.visualViewport) return;
+
+      const viewport = window.visualViewport;
+      const isKeyboardNowVisible = viewport.height < window.innerHeight * 0.75;
+
+      if (isKeyboardNowVisible !== isMobileKeyboardVisible) {
+        setIsMobileKeyboardVisible(isKeyboardNowVisible);
+
+        // Clear previous timeout
+        clearTimeout(keyboardTimeout);
+
+        // Only scroll when keyboard appears and there are messages
+        if (isKeyboardNowVisible && messages.length > 0 && isReady) {
+          keyboardTimeout = setTimeout(() => {
+            scrollToBottom();
+          }, 600); // Longer delay for keyboard animations
+        }
       }
     };
 
-    // Listen for viewport changes (mobile keyboard show/hide)
-    window.addEventListener('resize', handleResize);
-    // Also listen for visual viewport changes (better mobile support)
+    // Use Visual Viewport API for better mobile keyboard detection
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
+      window.visualViewport.addEventListener('resize', handleVisualViewportChange);
     }
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      clearTimeout(keyboardTimeout);
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleResize);
+        window.visualViewport.removeEventListener('resize', handleVisualViewportChange);
       }
     };
-  }, [messages.length]);
+  }, [messages.length, isReady, isMobileKeyboardVisible]);
 
   // useEffect(() => {
   //   if (textareaRef.current) {
@@ -566,7 +578,7 @@ export default function Room() {
   const isAgree = Object.values(agree).every((item) => item)
 
   return (
-    <div className="fixed inset-0 w-full h-full overflow-hidden chat-layout">
+    <div className={`fixed inset-0 w-full h-full overflow-hidden chat-layout ${isMobileKeyboardVisible ? 'mobile-keyboard-visible' : ''}`}>
       {isRecording && (
         <Notification>
           <p>Происходит запись голосового сообщения...</p>
@@ -588,9 +600,9 @@ export default function Room() {
           </Notification>
       )}
 
-      {/* Fixed Header */}
+      {/* Desktop Header - Fixed */}
       <div
-        className={`chat-header-fixed p-4 border-b shadow z-50 ${user?.doctor ? 'bg-yellow-300' : 'bg-white'}`}
+        className={`chat-header-fixed hidden md:block p-4 border-b shadow z-50 ${user?.doctor ? 'bg-yellow-300' : 'bg-white'}`}
       >
           <div className="flex flex-col gap-1">
             <div className="flex gap-2 flex-col">
@@ -640,44 +652,154 @@ export default function Room() {
           </div>
         </div>
 
-      {/* Scrollable Content Area */}
+      {/* Scrollable Content Area - includes header on mobile */}
       <div className="chat-messages-area bg-gray-100">
         {isReady ? (
-          <div className="flex flex-col gap-1 px-4 py-2 min-h-full">
-            {messages.map((item) => (
-              <Message key={item.id} item={item} room={room} onEdit={onEdit} />
-            ))}
-            {isTyping && (
-              <div className="min-h-[20px] flex py-2">
-                  <span className="text-sm text-gray-500">Пользователь печатает...</span>
+          <div className="flex flex-col min-h-full">
+            {/* Mobile Header - Scrollable */}
+            <div
+              className={`md:hidden p-4 border-b shadow ${user?.doctor ? 'bg-yellow-300' : 'bg-white'}`}
+            >
+              <div className="flex flex-col gap-1">
+                <div className="flex gap-2 flex-col">
+                  <div className="gap-2 flex justify-between flex-col sm:flex-row flex-1">
+                    <div className="flex justify-between items-center gap-2">
+                      {user && (
+                        <Link href="/rooms">Назад</Link>
+                      )}
+                      <span className="text-center text-xl font-semibold">Он-лайн консультация</span>
+                    </div>
+
+                    <span className="flex flex-col gap-2 sm:flex-row">
+                      <span className="flex items-center gap-1">
+                        <span className={`flex w-3 h-3 rounded-full ${isPatientConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span>{user ? room.patientName : 'Вы'}</span>
+                      </span>
+                      {!isAdmin && (
+                        <span className="flex items-center gap-1">
+                          <span className={`flex w-3 h-3 rounded-full ${onlineUsers.includes(room.doctor.userId) ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <span>{user ? `Вы` : room.doctor.name}</span>
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  {doctor && (
+                    <div className="flex gap-2 items-center">
+                      <div className="flex gap-2 flex-1">
+                        <Avatar className="w-[60px] h-[60px]" src={doctor.imageUrl} />
+                        <div className="flex flex-col gap-0.5">
+                          <div className="text-xs">{doctor.name}</div>
+                          <div className="text-xs">{doctor.description}</div>
+                          <Link className="text-xs" target="_blank" href={doctor.externalUrl}>Описание</Link>
+                        </div>
+                      </div>
+                      {isCanEnd && (
+                        <Button
+                          isIconOnly
+                          color="danger"
+                          onPress={handleEnd}
+                        >
+                          <CloseIcon width={20} height={20} fill="#fff" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-            <div ref={messagesEndRef} className="h-2" />
+            </div>
+
+            {/* Messages Content */}
+            <div className="flex flex-col gap-1 px-4 py-2 flex-1">
+              {messages.map((item) => (
+                <Message key={item.id} item={item} room={room} onEdit={onEdit} />
+              ))}
+              {isTyping && (
+                <div className="min-h-[20px] flex py-2">
+                    <span className="text-sm text-gray-500">Пользователь печатает...</span>
+                </div>
+              )}
+              <div ref={messagesEndRef} className="h-2" />
+            </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-1 p-4 bg-white min-h-full">
-            <h1 className="text-xl text-primary">Соглашение</h1>
-            <p>Я согласен на онлайн-консультацию и понимаю, что она проводится <strong>БЕЗ ОСМОТРА ПАЦИЕНТА ВРАЧОМ</strong> в целях:</p>
-            <div>
-              <p>1. сбора, анализа жалоб пациента и данных анамнеза, оценки эффективности лечебно-диагностических мероприятий, медицинского наблюдения за состоянием здоровья пациента, профилактики;</p>
-              <p>2. принятия решения о необходимости проведения очного приема (осмотра, консультации) или госпитализации пациента;</p>
-              <p>3. коррекции ранее назначенного лечения при условии установления  диагноза и назначения лечения на очном приеме (осмотре, консультации).</p>
-            </div>
-            <div className="mt-2">
-              <Checkbox onChange={() => handleChangeAgree(1)} classNames={{ hiddenInput: 'z-[0]' }}>
-                Я согласен на <Link target="_blank" href="https://alenushka-pediatr.ru/personal-data-agreement">обработку персональных данных</Link>. С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/politika-personalnyh-dannyh.pdf"> Политикой конфиденциальности и защиты персональных данных</Link> ознакомлен.
-              </Checkbox>
-              <Checkbox onChange={() => handleChangeAgree(2)} classNames={{ hiddenInput: 'z-[0]' }}>
-                С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/dogovor-oferta-na-distkonsultaciu.pdf">Договором-офертой</Link> на возмездное оказание медицинских услуг с использованием дистанционного взаимодействия ознакомлен.
-              </Checkbox>
-              <Checkbox onChange={() => handleChangeAgree(3)} classNames={{ hiddenInput: 'z-[0]' }}>
-                С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/ids-na-chatperepisku.pdf"> Информированным добровольным согласием</Link> на проведение дистанционной консультации врача-специалиста ознакомлен.
-              </Checkbox>
+          <div className="flex flex-col min-h-full bg-white">
+            {/* Mobile Header - Scrollable (Agreement Page) */}
+            <div
+              className={`md:hidden p-4 border-b shadow ${user?.doctor ? 'bg-yellow-300' : 'bg-white'}`}
+            >
+              <div className="flex flex-col gap-1">
+                <div className="flex gap-2 flex-col">
+                  <div className="gap-2 flex justify-between flex-col sm:flex-row flex-1">
+                    <div className="flex justify-between items-center gap-2">
+                      {user && (
+                        <Link href="/rooms">Назад</Link>
+                      )}
+                      <span className="text-center text-xl font-semibold">Он-лайн консультация</span>
+                    </div>
 
-              <p className="mt-2">Клиника Алёнушка</p>
+                    <span className="flex flex-col gap-2 sm:flex-row">
+                      <span className="flex items-center gap-1">
+                        <span className={`flex w-3 h-3 rounded-full ${isPatientConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span>{user ? room.patientName : 'Вы'}</span>
+                      </span>
+                      {!isAdmin && (
+                        <span className="flex items-center gap-1">
+                          <span className={`flex w-3 h-3 rounded-full ${onlineUsers.includes(room.doctor.userId) ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <span>{user ? `Вы` : room.doctor.name}</span>
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  {doctor && (
+                    <div className="flex gap-2 items-center">
+                      <div className="flex gap-2 flex-1">
+                        <Avatar className="w-[60px] h-[60px]" src={doctor.imageUrl} />
+                        <div className="flex flex-col gap-0.5">
+                          <div className="text-xs">{doctor.name}</div>
+                          <div className="text-xs">{doctor.description}</div>
+                          <Link className="text-xs" target="_blank" href={doctor.externalUrl}>Описание</Link>
+                        </div>
+                      </div>
+                      {isCanEnd && (
+                        <Button
+                          isIconOnly
+                          color="danger"
+                          onPress={handleEnd}
+                        >
+                          <CloseIcon width={20} height={20} fill="#fff" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="mt-4 flex justify-center">
-              <Button color={isAgree ? "primary" : "default"} onPress={handleSubmitAgree} disabled={!isAgree}>Согласен</Button>
+
+            {/* Agreement Content */}
+            <div className="flex flex-col gap-1 p-4 flex-1">
+              <h1 className="text-xl text-primary">Соглашение</h1>
+              <p>Я согласен на онлайн-консультацию и понимаю, что она проводится <strong>БЕЗ ОСМОТРА ПАЦИЕНТА ВРАЧОМ</strong> в целях:</p>
+              <div>
+                <p>1. сбора, анализа жалоб пациента и данных анамнеза, оценки эффективности лечебно-диагностических мероприятий, медицинского наблюдения за состоянием здоровья пациента, профилактики;</p>
+                <p>2. принятия решения о необходимости проведения очного приема (осмотра, консультации) или госпитализации пациента;</p>
+                <p>3. коррекции ранее назначенного лечения при условии установления  диагноза и назначения лечения на очном приеме (осмотре, консультации).</p>
+              </div>
+              <div className="mt-2">
+                <Checkbox onChange={() => handleChangeAgree(1)} classNames={{ hiddenInput: 'z-[0]' }}>
+                  Я согласен на <Link target="_blank" href="https://alenushka-pediatr.ru/personal-data-agreement">обработку персональных данных</Link>. С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/politika-personalnyh-dannyh.pdf"> Политикой конфиденциальности и защиты персональных данных</Link> ознакомлен.
+                </Checkbox>
+                <Checkbox onChange={() => handleChangeAgree(2)} classNames={{ hiddenInput: 'z-[0]' }}>
+                  С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/dogovor-oferta-na-distkonsultaciu.pdf">Договором-офертой</Link> на возмездное оказание медицинских услуг с использованием дистанционного взаимодействия ознакомлен.
+                </Checkbox>
+                <Checkbox onChange={() => handleChangeAgree(3)} classNames={{ hiddenInput: 'z-[0]' }}>
+                  С <Link target="_blank" href="https://alenushka-pediatr.ru/static/docs/ids-na-chatperepisku.pdf"> Информированным добровольным согласием</Link> на проведение дистанционной консультации врача-специалиста ознакомлен.
+                </Checkbox>
+
+                <p className="mt-2">Клиника Алёнушка</p>
+              </div>
+              <div className="mt-4 flex justify-center">
+                <Button color={isAgree ? "primary" : "default"} onPress={handleSubmitAgree} disabled={!isAgree}>Согласен</Button>
+              </div>
             </div>
           </div>
         )}
@@ -718,14 +840,7 @@ export default function Room() {
                   onChange={(e) => {
                     setText(e.target.value);
                     handleTyping();
-
-                    // Trigger scroll when user is actively typing
-                    // This ensures immediate scroll response to textarea growth
-                    if (messages.length > 0) {
-                      setTimeout(() => {
-                        scrollToBottom();
-                      }, 50);
-                    }
+                    // Removed immediate scroll trigger to prevent mobile keyboard conflicts
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
@@ -734,11 +849,11 @@ export default function Room() {
                     }
                   }}
                   onFocus={() => {
-                    // Scroll when textarea is focused (especially important on mobile)
+                    // Gentle scroll when textarea is focused on mobile
                     if (messages.length > 0) {
                       setTimeout(() => {
                         scrollToBottom();
-                      }, 200);
+                      }, 800); // Longer delay to allow keyboard animation
                     }
                   }}
                   placeholder="Введите сообщение"

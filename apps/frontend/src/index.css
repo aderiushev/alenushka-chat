@@ -56,60 +56,66 @@ body {
   }
 }
 
-/* Chat layout utilities using CSS Grid for dynamic footer */
+/* Mobile-first chat layout with scrollable header on mobile */
 @layer utilities {
-  /* Main chat layout container using CSS Grid */
+  /* Main chat layout container - mobile-first flexbox */
   .chat-layout {
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-    grid-template-areas:
-      "header"
-      "messages"
-      "footer";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
+    overscroll-behavior: none;
   }
 
-  /* Fixed header */
+  /* Header - scrollable on mobile, fixed on desktop */
   .chat-header-fixed {
-    grid-area: header;
-    position: sticky;
-    top: 0;
+    position: relative;
     z-index: 50;
     min-height: 140px;
+    flex-shrink: 0;
+    background: inherit;
   }
 
-  /* Scrollable messages area that fills available space */
+  /* Messages area - includes header scroll on mobile */
   .chat-messages-area {
-    grid-area: messages;
+    flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    min-height: 0; /* Important for grid item to shrink */
-    scroll-behavior: smooth; /* Ensure smooth scrolling */
-    /* Improve scroll performance on mobile */
+    min-height: 0;
+    scroll-behavior: smooth;
     transform: translateZ(0);
     will-change: scroll-position;
-  }
-
-  /* Dynamic footer that grows with content */
-  .chat-footer-dynamic {
-    grid-area: footer;
-    position: sticky;
-    bottom: 0;
-    z-index: 40;
-    min-height: 80px;
-    max-height: calc(100vh - 140px - 20px); /* Prevent footer from taking too much space */
-    overflow: visible;
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Ensure textarea can grow naturally */
+  /* Footer - always fixed at bottom */
+  .chat-footer-dynamic {
+    position: relative;
+    z-index: 40;
+    flex-shrink: 0;
+    min-height: 80px;
+    max-height: 50vh;
+    overflow: visible;
+    background: inherit;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Textarea optimization */
   .chat-footer-dynamic textarea {
     resize: none !important;
     overflow-y: auto;
     min-height: 60px;
-    max-height: calc(20 * 1.5em + 2rem); /* Approximate height for 20 rows */
+    max-height: 40vh;
+    -webkit-appearance: none;
+    border-radius: 8px;
   }
 
   /* Footer content layout */
@@ -125,4 +131,40 @@ body {
 input::file-selector-button {
   display: block;
 }
+
+  /* Desktop behavior - fixed header */
+  @media (min-width: 768px) {
+    .chat-layout {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header-fixed {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .chat-messages-area {
+      flex: 1;
+    }
+  }
+
+  /* Mobile behavior - scrollable header */
+  @media (max-width: 767px) {
+    .chat-layout {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header-fixed {
+      position: relative;
+      z-index: 10;
+    }
+
+    .chat-messages-area {
+      flex: 1;
+      padding-top: 0;
+    }
+  }
 
