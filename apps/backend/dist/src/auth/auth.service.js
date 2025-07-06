@@ -135,6 +135,79 @@ let AuthService = class AuthService {
             user
         };
     }
+    /**
+     * Update doctor status (active/disabled)
+     * @param doctorId - Doctor ID
+     * @param status - New status ('active' | 'disabled')
+     * @returns Updated doctor with user information
+     */
+    async updateDoctorStatus(doctorId, status) {
+        // First get the doctor to find the associated user
+        const doctor = await this.prisma.doctor.findUnique({
+            where: { id: doctorId },
+            include: { user: true }
+        });
+        if (!doctor) {
+            throw new common_1.BadRequestException('Doctor not found');
+        }
+        // Update the user status
+        const updatedUser = await this.prisma.user.update({
+            where: { id: doctor.userId },
+            data: { status },
+            include: { doctor: true }
+        });
+        return {
+            doctor: updatedUser.doctor,
+            user: updatedUser
+        };
+    }
+    /**
+     * Update doctor profile information
+     * @param doctorId - Doctor ID
+     * @param data - Updated doctor information
+     * @returns Updated doctor with user information
+     */
+    async updateDoctor(doctorId, data) {
+        const { name, description, imageUrl, externalUrl, email } = data;
+        // Check if doctor exists
+        const existingDoctor = await this.prisma.doctor.findUnique({
+            where: { id: doctorId },
+            include: { user: true }
+        });
+        if (!existingDoctor) {
+            throw new common_1.BadRequestException('Doctor not found');
+        }
+        // Check if email is being changed and if it's already taken by another user
+        if (email !== existingDoctor.user.email) {
+            const emailExists = await this.prisma.user.findUnique({
+                where: { email }
+            });
+            if (emailExists && emailExists.id !== existingDoctor.userId) {
+                throw new common_1.BadRequestException('Email is already taken by another user');
+            }
+        }
+        // Update both user and doctor in a transaction
+        const result = await this.prisma.$transaction(async (prisma) => {
+            // Update user email
+            const updatedUser = await prisma.user.update({
+                where: { id: existingDoctor.userId },
+                data: { email }
+            });
+            // Update doctor information
+            const updatedDoctor = await prisma.doctor.update({
+                where: { id: doctorId },
+                data: {
+                    name,
+                    description,
+                    imageUrl,
+                    externalUrl
+                },
+                include: { user: true }
+            });
+            return { user: updatedUser, doctor: updatedDoctor };
+        });
+        return result;
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([

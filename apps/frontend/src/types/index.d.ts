@@ -3,6 +3,7 @@ declare global {
     id: number;
     email: string;
     role: 'doctor' | 'admin';
+    status: 'active' | 'disabled';
     doctor?: Doctor;
     doctorId?: number;
   }
@@ -73,6 +74,17 @@ declare global {
       email: string;
       password: string;
     };
+  }
+
+  /**
+   * Form data interface for doctor profile editing
+   */
+  interface DoctorEditForm {
+    name: string;
+    description: string;
+    imageUrl: string;
+    externalUrl: string;
+    email: string;
   }
 
 }

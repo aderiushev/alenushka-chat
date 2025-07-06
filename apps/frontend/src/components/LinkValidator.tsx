@@ -11,7 +11,7 @@ interface LinkValidatorProps {
  * Component that validates and displays a clickable link
  * Shows validation status and makes the link clickable if valid
  */
-const LinkValidator = ({ url, label = "External Link", className = "" }: LinkValidatorProps) => {
+const LinkValidator = ({ url, label = "Внешняя ссылка", className = "" }: LinkValidatorProps) => {
   const [isValid, setIsValid] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
 
@@ -45,7 +45,7 @@ const LinkValidator = ({ url, label = "External Link", className = "" }: LinkVal
           color="default"
           size="sm"
         >
-          No link provided
+          Нет ссылки
         </Chip>
       </div>
     );
@@ -60,7 +60,7 @@ const LinkValidator = ({ url, label = "External Link", className = "" }: LinkVal
           color="primary"
           size="sm"
         >
-          Validating...
+          Проверка...
         </Chip>
       </div>
     );
@@ -75,7 +75,7 @@ const LinkValidator = ({ url, label = "External Link", className = "" }: LinkVal
           color="danger"
           size="sm"
         >
-          Invalid URL
+          Некорректная ссылка
         </Chip>
         <span className="text-sm text-gray-500 truncate max-w-xs">{url}</span>
       </div>
@@ -90,7 +90,7 @@ const LinkValidator = ({ url, label = "External Link", className = "" }: LinkVal
         color="success"
         size="sm"
       >
-        Valid URL
+        Действительная ссылка
       </Chip>
       <Link
         href={url}

@@ -171,7 +171,7 @@ export default function DoctorRegister() {
       <div className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 py-6 max-w-4xl">
           {success ? (
-            <Card className="bg-green-50 border-green-200 mb-6">
+            <Card className="bg-green-50 border-green-200">
               <CardBody className="space-y-4">
                 <h2 className="text-2xl font-semibold text-green-800">
                   ✅ Врач успешно зарегистрирован!
@@ -235,8 +235,8 @@ export default function DoctorRegister() {
               </CardBody>
             </Card>
           ) : (
-            <Form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md mb-6">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+            <Form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <h2 className="text-2xl font-semibold">Регистрация врача</h2>
                 <Button
                   type="button"

@@ -66,6 +66,18 @@ let AuthController = class AuthController {
         const user = this.jwtService.verify(token);
         return this.authService.update(Number(user.sub), { fcmToken: body.fcmToken });
     }
+    /**
+     * Toggle doctor status between active and disabled (admin-only endpoint)
+     */
+    async toggleDoctorStatus(id, body) {
+        return this.authService.updateDoctorStatus(Number(id), body.status);
+    }
+    /**
+     * Update doctor profile information (admin-only endpoint)
+     */
+    async updateDoctor(id, body) {
+        return this.authService.updateDoctor(Number(id), body);
+    }
 };
 exports.AuthController = AuthController;
 __decorate([
@@ -121,6 +133,26 @@ __decorate([
     __metadata("design:paramtypes", [Request, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "updateFcmToken", null);
+__decorate([
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, common_1.Patch)('doctors/:id/status'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "toggleDoctorStatus", null);
+__decorate([
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, common_1.Put)('doctors/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "updateDoctor", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService, prisma_service_1.PrismaService, jwt_service_1.JwtService])

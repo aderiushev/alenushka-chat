@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, UseGuards, Req, Param, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Post, Get, UseGuards, Req, Param, UnauthorizedException, Patch, Put } from '@nestjs/common';
 import { AuthService, DoctorRegistrationData } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {Roles} from "./roles.decorator";
@@ -72,5 +72,31 @@ export class AuthController {
     const user = this.jwtService.verify(token);
 
     return this.authService.update(Number(user.sub), { fcmToken: body.fcmToken });
+  }
+
+  /**
+   * Toggle doctor status between active and disabled (admin-only endpoint)
+   */
+  @Roles('admin')
+  @UseGuards(RolesGuard)
+  @Patch('doctors/:id/status')
+  async toggleDoctorStatus(@Param('id') id: string, @Body() body: { status: string }) {
+    return this.authService.updateDoctorStatus(Number(id), body.status);
+  }
+
+  /**
+   * Update doctor profile information (admin-only endpoint)
+   */
+  @Roles('admin')
+  @UseGuards(RolesGuard)
+  @Put('doctors/:id')
+  async updateDoctor(@Param('id') id: string, @Body() body: {
+    name: string;
+    description: string;
+    imageUrl: string;
+    externalUrl: string;
+    email: string;
+  }) {
+    return this.authService.updateDoctor(Number(id), body);
   }
 }

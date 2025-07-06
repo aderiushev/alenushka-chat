@@ -42,6 +42,16 @@ const Header = ()=>  {
                    Создать консультацию
                 </Link>
               </NavbarItem>
+              <NavbarItem>
+                <Link color="primary" href="/doctors">
+                  Управление врачами
+                </Link>
+              </NavbarItem>
+              <NavbarItem>
+                <Link color="secondary" href="/auth/register">
+                  Регистрация врача
+                </Link>
+              </NavbarItem>
             </>
           )}
 

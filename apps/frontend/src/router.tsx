@@ -11,6 +11,7 @@ import CreateRoom from './pages/CreateRoom';
 import NotFound from './pages/NotFound';
 import {useUser} from "@/hooks/useUser";
 import DoctorRegister from "@/pages/DoctorRegister";
+import DoctorsManagement from "@/pages/DoctorsManagement";
 
 /**
  * ProtectedRoute component that enforces authentication and optional role-based access control
@@ -52,6 +53,7 @@ export const router = createBrowserRouter(
       </Route>
       <Route element={<AdminRoute />}>
         <Route path="/auth/register" element={<DoctorRegister />} />
+        <Route path="/doctors" element={<DoctorsManagement />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Route>

@@ -49,4 +49,5 @@ model User {
   fcmToken String?
   doctor   Doctor?
   role     String @default("doctor")
+  status   String @default("active")
 }
