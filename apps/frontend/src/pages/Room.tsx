@@ -116,8 +116,8 @@ const Message = (props: MessageProps) => {
   }
 
   return (
-    <div key={props.item.id} className={`border-b p-2 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, props.item) && 'bg-primary-50'} ${props.item.pending ? 'opacity-70' : ''}`}>
-      <div className="flex gap-2 items-center min-h-[64px]">
+    <div key={props.item.id} className={`border-b p-4 rounded-lg shadow-sm gap-2 flex flex-col ${isMe(user, props.item) ? 'bg-primary-50' : 'bg-secondary-50'} ${props.item.pending ? 'opacity-70' : ''}`}>
+      <div className="flex gap-2 items-center">
         <div className="flex-1 flex items-center gap-2">
           {props.item.doctorId && (
             <Avatar src={props.item.doctor?.imageUrl} />
@@ -130,7 +130,7 @@ const Message = (props: MessageProps) => {
           )}
         </div>
 
-        <div className="flex flex-col gap-2 items-end">
+        <div className="flex flex-row gap-2 items-center">
           <span className="text-xs">{moment(props.item.createdAt).format('DD.MM.YYYY HH:mm')}</span>
           {isMe(user, props.item) && !props.item.pendingDelete && (
             <Popover placement="right" isOpen={isMessagePopoverOpen} disableAnimation onClose={() => setIsMessagePopoverOpen(false)}>
@@ -228,6 +228,7 @@ export default function Room() {
     3: false
   })
   const [isAgreed, setIsAgreed] = useState<boolean>(!!localStorage.getItem('isAgreed'));
+  const isReady = !!user || isAgreed;
 
   useNavigationBlock(textareaRef);
 
@@ -308,6 +309,46 @@ export default function Room() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Auto-scroll when textarea content changes (grows/shrinks)
+  useEffect(() => {
+    // Only scroll if there are messages and user is ready (footer is visible)
+    if (messages.length > 0 && isReady) {
+      // Use a small delay to ensure the textarea has finished resizing
+      const timeoutId = setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [text, messages.length]);
+
+  // Additional scroll trigger for mobile virtual keyboard changes
+  useEffect(() => {
+    const handleResize = () => {
+      // Only scroll if there are messages and user is ready
+      if (messages.length > 0 && isReady) {
+        // Delay to allow for virtual keyboard animation
+        setTimeout(() => {
+          scrollToBottom();
+        }, 300);
+      }
+    };
+
+    // Listen for viewport changes (mobile keyboard show/hide)
+    window.addEventListener('resize', handleResize);
+    // Also listen for visual viewport changes (better mobile support)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      }
+    };
+  }, [messages.length]);
 
   // useEffect(() => {
   //   if (textareaRef.current) {
@@ -413,6 +454,11 @@ export default function Room() {
       });
     }
     setText('');
+
+    // Scroll to bottom after sending message (textarea will shrink back to 4 rows)
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -487,13 +533,6 @@ export default function Room() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
-
-  useEffect(() => {
     const handleNewMessage = () => {
       if (!isTabFocused) {
         if (!audioRef.current) {
@@ -522,13 +561,12 @@ export default function Room() {
   const isPatientConnected = ((typeof socket?.id === 'string' || typeof socket?.id === 'number') && onlineUsers.includes(socket.id))
       || (onlineUsers.length > 1 && onlineUsers.includes(room.doctor.userId));
 
-  const isReady = !!user || isAgreed;
   const isCanEnd = user && (user.role === 'admin' || user.id === room.doctor.userId);
   const isAdmin = user?.role === 'admin';
   const isAgree = Object.values(agree).every((item) => item)
 
   return (
-    <div className="flex gap-1 flex-1">
+    <div className="fixed inset-0 w-full h-full overflow-hidden chat-layout">
       {isRecording && (
         <Notification>
           <p>Происходит запись голосового сообщения...</p>
@@ -549,8 +587,11 @@ export default function Room() {
             </p>
           </Notification>
       )}
-      <div className="flex flex-col flex-1">
-        <div className={`p-4 border-b shadow z-10 ${user?.doctor ? 'bg-yellow-300' : 'bg-white'}`}>
+
+      {/* Fixed Header */}
+      <div
+        className={`chat-header-fixed p-4 border-b shadow z-50 ${user?.doctor ? 'bg-yellow-300' : 'bg-white'}`}
+      >
           <div className="flex flex-col gap-1">
             <div className="flex gap-2 flex-col">
               <div className="gap-2 flex justify-between flex-col sm:flex-row flex-1">
@@ -599,21 +640,22 @@ export default function Room() {
           </div>
         </div>
 
+      {/* Scrollable Content Area */}
+      <div className="chat-messages-area bg-gray-100">
         {isReady ? (
-          <div className="flex-1 overflow-y-auto gap-1 flex flex-col px-4 pt-4">
-
-          {messages.map((item) => (
-            <Message key={item.id} item={item} room={room} onEdit={onEdit} />
-          ))}
-          <div className="min-h-[20px] flex">
+          <div className="flex flex-col gap-1 px-4 py-2 min-h-full">
+            {messages.map((item) => (
+              <Message key={item.id} item={item} room={room} onEdit={onEdit} />
+            ))}
             {isTyping && (
-              <span className="text-sm text-gray-500">Пользователь печатает...</span>
+              <div className="min-h-[20px] flex py-2">
+                  <span className="text-sm text-gray-500">Пользователь печатает...</span>
+              </div>
             )}
+            <div ref={messagesEndRef} className="h-2" />
           </div>
-          <div ref={messagesEndRef} className="h-0" />
-        </div>
         ) : (
-          <div className="flex-1 overflow-y-auto gap-1 flex flex-col p-4 bg-white">
+          <div className="flex flex-col gap-1 p-4 bg-white min-h-full">
             <h1 className="text-xl text-primary">Соглашение</h1>
             <p>Я согласен на онлайн-консультацию и понимаю, что она проводится <strong>БЕЗ ОСМОТРА ПАЦИЕНТА ВРАЧОМ</strong> в целях:</p>
             <div>
@@ -639,80 +681,101 @@ export default function Room() {
             </div>
           </div>
         )}
-
-        {isReady && (
-          <>
-            {room && room.status === 'active' ? (
-              <div className="flex flex-row items-start sm:items-center gap-2 p-2 border-t-1 justify-end">
-                {!isAdmin && (
-                  <>
-                    <input
-                      type="file"
-                      id="file"
-                      accept="*/*"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-
-                    <label
-                      htmlFor="file"
-                      className="min-w-[40px] min-h-[40px] flex items-center justify-center whitespace-nowrap cursor-pointer bg-blue-600 text-white rounded-[12px] hover:bg-blue-500 transition"
-                    >
-                      <FileIcon width={20} height={20} fill="#fff" />
-                    </label>
-                  </>
-                )}
-
-                {!isAdmin && (
-                  <Textarea
-                    minRows={4}
-                    maxRows={20}
-                    isClearable={!!messageEditingId}
-                    onClear={onCancelEditing}
-                    classNames={{ input: "max-h-[100%]", inputWrapper: "rounded-none" }}
-                    ref={textareaRef}
-                    value={text}
-                    onChange={(e) => {
-                      setText(e.target.value);
-                      handleTyping();
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                        e.preventDefault();
-                        handleSend();
-                      }
-                    }}
-                    placeholder="Введите сообщение"
-                    size="lg"
-                  />
-                )}
-
-                  <div className="flex gap-2 justify-end w-auto">
-                    {text && (
-                      <Button
-                        isIconOnly
-                        color="primary"
-                        onPress={handleSend}
-                      >
-                        <SendIcon width={20} height={20} fill="#fff" />
-                      </Button>
-                    )}
-
-                    {!isAdmin && !isRecording && (
-                      <Button color="warning" isIconOnly onPress={handleStartRecording}>
-                        <StartRecordingIcon width={20} height={20} fill="#fff" />
-                      </Button>
-                    )}
-                  </div>
-              </div>
-            ) : (
-              <div className="p-4 border-t bg-white flex flex-col sm:flex-row justify-center gap-2">
-                <p className="text-center">Консультация завершена</p>
-              </div>
-            )}
-          </>
-        )}
       </div>
+
+      {/* Dynamic Footer */}
+      {isReady && (
+        <div className="chat-footer-dynamic border-t bg-white z-40">
+          {room && room.status === 'active' ? (
+            <div className="flex flex-row items-end gap-2 min-h-[80px]">
+              {!isAdmin && (
+                <>
+                  <input
+                    type="file"
+                    id="file"
+                    accept="*/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+
+                  <label
+                    htmlFor="file"
+                    className="min-w-[40px] min-h-[40px] flex items-center justify-center whitespace-nowrap cursor-pointer bg-blue-600 text-white rounded-[12px] hover:bg-blue-500 transition flex-shrink-0 mb-2"
+                  >
+                    <FileIcon width={20} height={20} fill="#fff" />
+                  </label>
+                </>
+              )}
+
+              {!isAdmin && (
+                <Textarea
+                  minRows={4}
+                  maxRows={20}
+                  isClearable={!!messageEditingId}
+                  onClear={onCancelEditing}
+                  ref={textareaRef}
+                  value={text}
+                  onChange={(e) => {
+                    setText(e.target.value);
+                    handleTyping();
+
+                    // Trigger scroll when user is actively typing
+                    // This ensures immediate scroll response to textarea growth
+                    if (messages.length > 0) {
+                      setTimeout(() => {
+                        scrollToBottom();
+                      }, 50);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  onFocus={() => {
+                    // Scroll when textarea is focused (especially important on mobile)
+                    if (messages.length > 0) {
+                      setTimeout(() => {
+                        scrollToBottom();
+                      }, 200);
+                    }
+                  }}
+                  placeholder="Введите сообщение"
+                  size="lg"
+                  classNames={{
+                    base: "flex-1",
+                    inputWrapper: "min-h-[60px]",
+                    input: "resize-none"
+                  }}
+                />
+              )}
+
+              <div className="flex flex-col gap-2 justify-end flex-shrink-0 mb-2">
+                {text && (
+                  <Button
+                    isIconOnly
+                    color="primary"
+                    onPress={handleSend}
+                  >
+                    <SendIcon width={20} height={20} fill="#fff" />
+                  </Button>
+                )}
+
+                {!isAdmin && !isRecording && (
+                  <Button color="warning" isIconOnly onPress={handleStartRecording}>
+                    <StartRecordingIcon width={20} height={20} fill="#fff" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row justify-center gap-2 min-h-[80px] items-center">
+              <p className="text-center">Консультация завершена</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

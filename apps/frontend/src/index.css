@@ -5,6 +5,8 @@
 
 html, body {
   height: 100%;
+  /* Prevent zoom on iOS when focusing inputs */
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -12,6 +14,8 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  /* Prevent horizontal scrolling */
+  overflow-x: hidden;
 }
 
 #root {
@@ -26,6 +30,97 @@ body {
   flex-direction: column;
 }
 
+/* Mobile-specific improvements for chat layout */
+@media (max-width: 768px) {
+  /* Ensure fixed elements work properly on mobile */
+  .fixed {
+    position: fixed !important;
+  }
+
+  /* Improve scrolling performance on mobile */
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Prevent zoom on input focus for better UX */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+
+  /* Improve virtual keyboard behavior */
+  .chat-layout {
+    /* Use viewport units that account for virtual keyboard */
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for better mobile support */
+  }
+}
+
+/* Chat layout utilities using CSS Grid for dynamic footer */
+@layer utilities {
+  /* Main chat layout container using CSS Grid */
+  .chat-layout {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "header"
+      "messages"
+      "footer";
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Fixed header */
+  .chat-header-fixed {
+    grid-area: header;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    min-height: 140px;
+  }
+
+  /* Scrollable messages area that fills available space */
+  .chat-messages-area {
+    grid-area: messages;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    min-height: 0; /* Important for grid item to shrink */
+    scroll-behavior: smooth; /* Ensure smooth scrolling */
+    /* Improve scroll performance on mobile */
+    transform: translateZ(0);
+    will-change: scroll-position;
+  }
+
+  /* Dynamic footer that grows with content */
+  .chat-footer-dynamic {
+    grid-area: footer;
+    position: sticky;
+    bottom: 0;
+    z-index: 40;
+    min-height: 80px;
+    max-height: calc(100vh - 140px - 20px); /* Prevent footer from taking too much space */
+    overflow: visible;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Ensure textarea can grow naturally */
+  .chat-footer-dynamic textarea {
+    resize: none !important;
+    overflow-y: auto;
+    min-height: 60px;
+    max-height: calc(20 * 1.5em + 2rem); /* Approximate height for 20 rows */
+  }
+
+  /* Footer content layout */
+  .chat-footer-dynamic > div {
+    min-height: 80px;
+    height: auto;
+    display: flex;
+    align-items: flex-end;
+    padding: 0.5rem;
+  }
+}
 
 input::file-selector-button {
   display: block;
