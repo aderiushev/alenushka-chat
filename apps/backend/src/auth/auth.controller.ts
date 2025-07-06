@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Get, UseGuards, Req, Param, UnauthorizedException } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { AuthService, DoctorRegistrationData } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {Roles} from "./roles.decorator";
 import {RolesGuard} from "./roles.guard";
@@ -13,6 +13,17 @@ export class AuthController {
   @Post('register')
   async register(@Body() body: { email: string; password: string }) {
     return this.authService.register(body.email, body.password);
+  }
+
+  /**
+   * Register a new doctor (admin-only endpoint)
+   * Creates both User and Doctor records in a transaction
+   */
+  @Roles('admin')
+  @UseGuards(RolesGuard)
+  @Post('register-doctor')
+  async registerDoctor(@Body() body: DoctorRegistrationData) {
+    return this.authService.registerDoctor(body);
   }
 
   @Post('login')

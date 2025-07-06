@@ -54,10 +54,10 @@ export default function CreateRoom() {
   };
 
   return (
-      <div className="flex flex-col flex-1">
+      <div className="min-h-screen flex flex-col bg-gray-100">
         <Header />
-        <div className="flex sm:items-center justify-center flex-1">
-          <Form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-full max-w-sm">
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md w-full max-w-sm">
             <h2 className="text-2xl mb-4 font-semibold">Создать консультацию</h2>
               <Select
                 placeholder="Выберите врача"

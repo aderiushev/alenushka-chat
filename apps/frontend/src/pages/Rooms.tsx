@@ -77,10 +77,10 @@ export default function Rooms() {
   };
 
   return (
-    <div className="flex flex-col flex-1">
+    <div className="min-h-screen flex flex-col bg-gray-100">
       <Header />
 
-      <div className="flex gap-2 flex-col sm:flex-row overflow-y-auto">
+      <div className="flex-1 flex gap-2 flex-col sm:flex-row overflow-y-auto">
         <div className="flex sm:items-start flex-col flex-1 order-2 sm:order-1">
         <p className="px-4 text-xl font-semibold">Консультации</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6 p-4 w-full overflow-y-auto">

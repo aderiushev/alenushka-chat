@@ -28,6 +28,13 @@ let AuthController = class AuthController {
     async register(body) {
         return this.authService.register(body.email, body.password);
     }
+    /**
+     * Register a new doctor (admin-only endpoint)
+     * Creates both User and Doctor records in a transaction
+     */
+    async registerDoctor(body) {
+        return this.authService.registerDoctor(body);
+    }
     async login(body) {
         return this.authService.login(body.email, body.password);
     }
@@ -68,6 +75,15 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "register", null);
+__decorate([
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, common_1.Post)('register-doctor'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "registerDoctor", null);
 __decorate([
     (0, common_1.Post)('login'),
     __param(0, (0, common_1.Body)()),

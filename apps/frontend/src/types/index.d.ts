@@ -40,6 +40,41 @@ declare global {
     status: 'active' | 'completed';
   }
 
+  /**
+   * Form data interface for doctor registration
+   */
+  interface DoctorRegistrationForm {
+    email: string;
+    password: string;
+    name: string;
+    description: string;
+    imageUrl: string;
+    externalUrl: string;
+  }
+
+  /**
+   * Response interface for doctor registration
+   */
+  interface DoctorRegistrationResponse {
+    user: {
+      id: number;
+      email: string;
+      role: string;
+    };
+    doctor: {
+      id: number;
+      name: string;
+      description: string;
+      imageUrl: string;
+      externalUrl: string;
+      userId: number;
+    };
+    credentials: {
+      email: string;
+      password: string;
+    };
+  }
+
 }
 
 export {}

@@ -29,10 +29,10 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col flex-1">
+    <div className="min-h-screen flex flex-col bg-gray-100">
       <Header />
-      <div className="flex sm:items-center justify-center flex-1">
-        <Form onSubmit={handleLogin} className="bg-white p-6 rounded shadow-md w-full max-w-sm">
+      <div className="flex-1 flex items-center justify-center p-4">
+        <Form onSubmit={handleLogin} className="bg-white p-6 rounded-lg shadow-md w-full max-w-sm">
           <div className="flex items-center flex-col self-center">
             {user && (
               <>
