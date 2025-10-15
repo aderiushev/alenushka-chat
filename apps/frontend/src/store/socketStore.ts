@@ -217,21 +217,14 @@ export const useSocketStore = create<SocketState>()(
           }
         }
 
-        if (!currentUser) {
-          console.error('Cannot edit message: user not found');
-          return;
-        }
-
-        // Only allow editing your own messages
         const isOwnMessage =
-          (originalMessage.doctorId && currentUser.doctor?.id === originalMessage.doctorId) ||
-          (!originalMessage.doctorId && currentUser.role !== 'doctor');
+            currentUser
+                ? (originalMessage.doctorId
+                    ? currentUser.doctor?.id === originalMessage.doctorId
+                    : currentUser.role !== 'doctor')
+                : !originalMessage.doctorId;
 
         if (!isOwnMessage) {
-          console.error('Cannot edit message: not authorized', {
-            originalMessage: { id: originalMessage.id, doctorId: originalMessage.doctorId },
-            currentUser: { id: currentUser.id, role: currentUser.role, doctorId: currentUser.doctor?.id }
-          });
           return;
         }
 

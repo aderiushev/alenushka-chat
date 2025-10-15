@@ -166,10 +166,39 @@ export default function DoctorRegister() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100">
-      <Header />
-      <div className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 py-6 max-w-4xl">
+    <div className="register-layout">
+      {/* Fixed Header */}
+      <div className="register-header-fixed">
+        <Header />
+      </div>
+
+      {/* Fixed Page Title Section */}
+      <div className="register-title-fixed">
+        <div className="container mx-auto px-4 lg:px-8 xl:px-12" style={{ maxWidth: '1600px' }}>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div>
+              <h2 className="text-2xl font-semibold text-gray-800">Регистрация врача</h2>
+              <p className="text-sm text-gray-600 mt-1">Создание новой учетной записи врача в системе</p>
+            </div>
+            {!success && (
+              <Button
+                type="button"
+                color="secondary"
+                variant="bordered"
+                size="sm"
+                onClick={fillWithExample}
+                className="self-start sm:self-auto"
+              >
+                Заполнить примером
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Scrollable Form Area */}
+      <div className="register-form-scrollable">
+        <div className="w-full px-4 lg:px-8 xl:px-12 py-6 mx-auto" style={{ maxWidth: '1600px' }}>
           {success ? (
             <Card className="bg-green-50 border-green-200">
               <CardBody className="space-y-4">
@@ -177,15 +206,15 @@ export default function DoctorRegister() {
                   ✅ Врач успешно зарегистрирован!
                 </h2>
 
-                <div className="grid lg:grid-cols-2 gap-4">
-                  <div>
+                <div className="flex flex-col lg:flex-row gap-4">
+                  <div className="flex-1">
                     <h3 className="font-semibold mb-2">Информация о пользователе:</h3>
                     <p><strong>ID:</strong> {success.user.id}</p>
                     <p><strong>Email:</strong> {success.user.email}</p>
                     <p><strong>Роль:</strong> {success.user.role}</p>
                   </div>
 
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-semibold mb-2">Информация о враче:</h3>
                     <p><strong>ID:</strong> {success.doctor.id}</p>
                     <p><strong>Имя:</strong> {success.doctor.name}</p>
@@ -235,154 +264,186 @@ export default function DoctorRegister() {
               </CardBody>
             </Card>
           ) : (
-            <Form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                <h2 className="text-2xl font-semibold">Регистрация врача</h2>
-                <Button
-                  type="button"
-                  color="secondary"
-                  variant="bordered"
-                  size="sm"
-                  onClick={fillWithExample}
-                  className="self-start sm:self-auto"
-                >
-                  Заполнить примером
-                </Button>
-              </div>
-
+            <>
               {error && (
-                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                  {error}
+                <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded mb-6">
+                  <p className="font-semibold">Ошибка</p>
+                  <p>{error}</p>
                 </div>
               )}
 
-              <div className="grid lg:grid-cols-2 gap-6">
-                {/* User Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-700">Данные пользователя</h3>
+              <Form onSubmit={handleSubmit} className="space-y-6">
+                {/* First Row: Sections 1 & 2 - 50/50 split on desktop */}
+                <div className="w-full flex flex-col lg:flex-row gap-6">
+                  {/* Section 1: Account Credentials */}
+                  <div className="flex-1">
+                    <Card>
+                      <CardBody className="space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold">
+                            1
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-800">Учетные данные</h3>
+                        </div>
+                        <p className="text-sm text-gray-600 -mt-2">Данные для входа в систему</p>
 
-                  <Input
-                    type="email"
-                    label="Email"
-                    placeholder={`Пример: ${EXAMPLE_DATA.emails[exampleIndex]}`}
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    required
-                    description="Будет использоваться для входа в систему"
-                  />
+                        <Input
+                          type="email"
+                          label="Email"
+                          placeholder={`Пример: ${EXAMPLE_DATA.emails[exampleIndex]}`}
+                          value={formData.email}
+                          onChange={(e) => handleInputChange('email', e.target.value)}
+                          required
+                          description="Будет использоваться для входа в систему"
+                          size="lg"
+                        />
 
-                  <Input
-                    type="password"
-                    label="Пароль"
-                    placeholder="Минимум 8 символов"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    required
-                    description="Пароль для входа"
-                  />
-                </div>
-
-                {/* Doctor Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-700">Данные врача</h3>
-
-                  <Input
-                    type="text"
-                    label="Полное имя"
-                    placeholder={`Пример: ${EXAMPLE_DATA.names[exampleIndex]}`}
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    required
-                    description="ФИО врача"
-                  />
-
-                  <Input
-                    type="text"
-                    label="Специализация"
-                    placeholder={`Пример: ${EXAMPLE_DATA.descriptions[exampleIndex]}`}
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    required
-                    description="Специализация и квалификация"
-                  />
-                </div>
-              </div>
-
-              <Divider className="my-6" />
-
-              {/* Media and Links */}
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-700">Медиа и ссылки</h3>
-
-                <div className="grid lg:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <Input
-                      type="url"
-                      label="URL фотографии"
-                      placeholder={`Пример: ${EXAMPLE_DATA.imageUrls[exampleIndex]}`}
-                      value={formData.imageUrl}
-                      onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-                      required
-                      description="Ссылка на фотографию врача"
-                    />
-
-                    <div>
-                      <p className="text-sm text-gray-600 mb-2">Предпросмотр изображения:</p>
-                      <ImagePreview
-                        imageUrl={formData.imageUrl}
-                        alt={formData.name || 'Фото врача'}
-                        className="w-32 h-32"
-                      />
-                    </div>
+                        <Input
+                          type="password"
+                          label="Пароль"
+                          placeholder="Минимум 8 символов"
+                          value={formData.password}
+                          onChange={(e) => handleInputChange('password', e.target.value)}
+                          required
+                          description="Временный пароль для первого входа"
+                          size="lg"
+                        />
+                      </CardBody>
+                    </Card>
                   </div>
 
-                  <div className="space-y-4">
-                    <Input
-                      type="url"
-                      label="Внешняя ссылка"
-                      placeholder={`Пример: ${EXAMPLE_DATA.externalUrls[exampleIndex]}`}
-                      value={formData.externalUrl}
-                      onChange={(e) => handleInputChange('externalUrl', e.target.value)}
-                      required
-                      description="Ссылка на страницу врача на сайте"
-                    />
+                  {/* Section 2: Doctor Profile */}
+                  <div className="flex-1">
+                    <Card>
+                      <CardBody className="space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold">
+                            2
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-800">Профиль врача</h3>
+                        </div>
+                        <p className="text-sm text-gray-600 -mt-2">Основная информация о враче</p>
 
-                    <div>
-                      <p className="text-sm text-gray-600 mb-2">Проверка ссылки:</p>
-                      <LinkValidator
-                        url={formData.externalUrl}
-                        label="Страница врача"
-                      />
-                    </div>
+                        <Input
+                          type="text"
+                          label="Полное имя"
+                          placeholder={`Пример: ${EXAMPLE_DATA.names[exampleIndex]}`}
+                          value={formData.name}
+                          onChange={(e) => handleInputChange('name', e.target.value)}
+                          required
+                          description="ФИО врача полностью"
+                          size="lg"
+                        />
+
+                        <Input
+                          type="text"
+                          label="Специализация"
+                          placeholder={`Пример: ${EXAMPLE_DATA.descriptions[exampleIndex]}`}
+                          value={formData.description}
+                          onChange={(e) => handleInputChange('description', e.target.value)}
+                          required
+                          description="Специализация и квалификация врача"
+                          size="lg"
+                        />
+                      </CardBody>
+                    </Card>
                   </div>
                 </div>
-              </div>
 
-              <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                <Button
-                  type="submit"
-                  color="primary"
-                  isLoading={isLoading}
-                  className="flex-1"
-                  size="lg"
-                >
-                  {isLoading ? 'Регистрация...' : 'Зарегистрировать врача'}
-                </Button>
-                <Button
-                  type="button"
-                  color="secondary"
-                  variant="bordered"
-                  onClick={() => navigate('/rooms')}
-                  className="sm:w-auto"
-                  size="lg"
-                >
-                  Отмена
-                </Button>
-              </div>
-            </Form>
+                {/* Second Row: Section 3 - Max 50% width on desktop */}
+                <div className="w-full lg:max-w-[50%]">
+                  <Card>
+                    <CardBody className="space-y-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold">
+                          3
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-800">Медиа и ссылки</h3>
+                      </div>
+                      <p className="text-sm text-gray-600 -mt-2">Фотография и дополнительная информация</p>
+
+                      {/* Image URL */}
+                      <div className="space-y-3">
+                        <Input
+                          type="url"
+                          label="URL фотографии врача"
+                          placeholder={`Пример: ${EXAMPLE_DATA.imageUrls[exampleIndex]}`}
+                          value={formData.imageUrl}
+                          onChange={(e) => handleInputChange('imageUrl', e.target.value)}
+                          required
+                          description="Прямая ссылка на фотографию врача"
+                          size="lg"
+                        />
+                        {formData.imageUrl && (
+                          <div className="pl-1">
+                            <p className="text-sm font-medium text-gray-700 mb-2">Предпросмотр:</p>
+                            <ImagePreview
+                              imageUrl={formData.imageUrl}
+                              alt={formData.name || 'Фото врача'}
+                              className="w-32 h-32 rounded-lg border-2 border-gray-200"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* External URL */}
+                      <div className="space-y-3">
+                        <Input
+                          type="url"
+                          label="Ссылка на профиль врача"
+                          placeholder={`Пример: ${EXAMPLE_DATA.externalUrls[exampleIndex]}`}
+                          value={formData.externalUrl}
+                          onChange={(e) => handleInputChange('externalUrl', e.target.value)}
+                          required
+                          description="Ссылка на страницу врача на сайте клиники"
+                          size="lg"
+                        />
+                        {formData.externalUrl && (
+                          <div className="pl-1">
+                            <LinkValidator
+                              url={formData.externalUrl}
+                              label="Страница врача"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </CardBody>
+                  </Card>
+                </div>
+              </Form>
+            </>
           )}
         </div>
       </div>
+
+      {/* Fixed Footer with Action Buttons */}
+      {!success && (
+        <div className="register-footer-fixed">
+          <div className="container mx-auto px-4 lg:px-8 xl:px-12" style={{ maxWidth: '1600px' }}>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button
+                type="submit"
+                color="primary"
+                isLoading={isLoading}
+                onClick={handleSubmit}
+                className="flex-1 sm:flex-initial sm:min-w-[200px]"
+                size="lg"
+              >
+                {isLoading ? 'Регистрация...' : 'Зарегистрировать врача'}
+              </Button>
+              <Button
+                type="button"
+                color="default"
+                variant="bordered"
+                onClick={() => navigate('/rooms')}
+                size="lg"
+              >
+                Отмена
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

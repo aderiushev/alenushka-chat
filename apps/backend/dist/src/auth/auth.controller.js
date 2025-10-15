@@ -40,6 +40,11 @@ let AuthController = class AuthController {
     }
     async getDoctors() {
         return this.prisma.doctor.findMany({
+            where: {
+                user: {
+                    status: 'active',
+                },
+            },
             include: {
                 user: true,
             },
@@ -77,6 +82,12 @@ let AuthController = class AuthController {
      */
     async updateDoctor(id, body) {
         return this.authService.updateDoctor(Number(id), body);
+    }
+    /**
+     * Soft delete a doctor by setting status to 'disabled' (admin-only endpoint)
+     */
+    async deleteDoctor(id) {
+        return this.authService.updateDoctorStatus(Number(id), 'disabled');
     }
 };
 exports.AuthController = AuthController;
@@ -153,6 +164,15 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "updateDoctor", null);
+__decorate([
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, common_1.Patch)('doctors/:id/delete'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "deleteDoctor", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService, prisma_service_1.PrismaService, jwt_service_1.JwtService])

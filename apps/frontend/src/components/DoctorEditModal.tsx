@@ -25,6 +25,8 @@ interface DoctorEditModalProps {
   doctor: Doctor | null;
   /** Function called when form is submitted */
   onSubmit: (data: DoctorEditForm) => Promise<void>;
+  /** Function called when delete is requested */
+  onDelete?: (doctor: Doctor) => Promise<void>;
   /** Whether the form is currently submitting */
   isLoading?: boolean;
 }
@@ -38,6 +40,7 @@ export default function DoctorEditModal({
   onClose,
   doctor,
   onSubmit,
+  onDelete,
   isLoading = false
 }: DoctorEditModalProps) {
   const [formData, setFormData] = useState<DoctorEditForm>({
@@ -48,6 +51,7 @@ export default function DoctorEditModal({
     email: ''
   });
   const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   /**
    * Initialize form data when doctor changes
@@ -118,7 +122,32 @@ export default function DoctorEditModal({
    */
   const handleClose = () => {
     setError(null);
+    setIsDeleting(false);
     onClose();
+  };
+
+  /**
+   * Handle doctor deletion
+   */
+  const handleDelete = async () => {
+    if (!doctor || !onDelete) return;
+
+    const confirmed = window.confirm(
+      `Вы уверены, что хотите удалить врача "${doctor.name}"? Это действие скроет врача из списка.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsDeleting(true);
+      await onDelete(doctor);
+      onClose();
+    } catch (err) {
+      console.error('Failed to delete doctor:', err);
+      setError('Не удалось удалить врача. Попробуйте снова.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (!doctor) return null;
@@ -131,7 +160,7 @@ export default function DoctorEditModal({
       scrollBehavior="inside"
     >
       <ModalContent>
-        <ModalHeader className="flex flex-col gap-1">
+        <ModalHeader className="flex flex-col gap-1 border-b-2 shadow-md">
           <h2 className="text-xl font-semibold">Редактирование врача</h2>
           <p className="text-sm text-gray-600">ID: {doctor.id}</p>
         </ModalHeader>
@@ -220,23 +249,38 @@ export default function DoctorEditModal({
             </div>
           </ModalBody>
 
-          <ModalFooter>
-            <Button
-              color="danger"
-              variant="light"
-              onPress={handleClose}
-              disabled={isLoading}
-            >
-              Отмена
-            </Button>
-            <Button
-              color="primary"
-              type="submit"
-              isLoading={isLoading}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Сохранение...' : 'Сохранить изменения'}
-            </Button>
+          <ModalFooter className="border-t-2 shadow-md flex justify-between">
+            <div>
+              {onDelete && (
+                <Button
+                  color="danger"
+                  variant="flat"
+                  onPress={handleDelete}
+                  isLoading={isDeleting}
+                  disabled={isLoading || isDeleting}
+                >
+                  {isDeleting ? 'Удаление...' : 'Удалить врача'}
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                color="danger"
+                variant="light"
+                onPress={handleClose}
+                disabled={isLoading || isDeleting}
+              >
+                Отмена
+              </Button>
+              <Button
+                color="primary"
+                type="submit"
+                isLoading={isLoading}
+                disabled={isLoading || isDeleting}
+              >
+                {isLoading ? 'Сохранение...' : 'Сохранить изменения'}
+              </Button>
+            </div>
           </ModalFooter>
         </Form>
       </ModalContent>

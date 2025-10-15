@@ -710,13 +710,29 @@ export default function Room() {
 
             {/* Messages Content */}
             <div className="flex flex-col gap-1 px-4 py-2 flex-1">
-              {messages.map((item) => (
-                <Message key={item.id} item={item} room={room} onEdit={onEdit} />
-              ))}
-              {isTyping && (
-                <div className="min-h-[20px] flex py-2">
-                    <span className="text-sm text-gray-500">Пользователь печатает...</span>
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center flex-1 text-center py-8">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md mx-auto">
+                    <div className="text-4xl mb-3">👋</div>
+                    <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                      Добро пожаловать в чат!
+                    </h3>
+                    <p className="text-blue-600">
+                      Начните ваш разговор здесь
+                    </p>
+                  </div>
                 </div>
+              ) : (
+                <>
+                  {messages.map((item) => (
+                    <Message key={item.id} item={item} room={room} onEdit={onEdit} />
+                  ))}
+                  {isTyping && (
+                    <div className="min-h-[20px] flex py-2">
+                        <span className="text-sm text-gray-500">Пользователь печатает...</span>
+                    </div>
+                  )}
+                </>
               )}
               <div ref={messagesEndRef} className="h-2" />
             </div>

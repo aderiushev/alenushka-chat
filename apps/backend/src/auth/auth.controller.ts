@@ -36,6 +36,11 @@ export class AuthController {
   @Get('doctors')
   async getDoctors() {
     return this.prisma.doctor.findMany({
+      where: {
+        user: {
+          status: 'active',
+        },
+      },
       include: {
         user: true,
       },
@@ -98,5 +103,15 @@ export class AuthController {
     email: string;
   }) {
     return this.authService.updateDoctor(Number(id), body);
+  }
+
+  /**
+   * Soft delete a doctor by setting status to 'disabled' (admin-only endpoint)
+   */
+  @Roles('admin')
+  @UseGuards(RolesGuard)
+  @Patch('doctors/:id/delete')
+  async deleteDoctor(@Param('id') id: string) {
+    return this.authService.updateDoctorStatus(Number(id), 'disabled');
   }
 }

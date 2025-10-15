@@ -78,6 +78,11 @@ let ChatGateway = class ChatGateway {
             if (!message) {
                 return { success: false, error: 'Message not found' };
             }
+            const isNotDoctor = message.doctor && Number(userId) !== message.doctor.userId;
+            const hasUserId = userId !== null;
+            if (isNotDoctor || hasUserId) {
+                return { success: false, error: 'Unauthorized' };
+            }
             const editedMessage = await this.chatService.editMessage(dto);
             this.server.to(editedMessage.roomId).emit('edited-message', { message: editedMessage, clientId: client.id });
             return { success: true, message: editedMessage };
@@ -95,7 +100,9 @@ let ChatGateway = class ChatGateway {
             if (!message) {
                 return { success: false, error: 'Message not found' };
             }
-            if (Number(userId) !== message.doctor.userId) {
+            const isNotDoctor = message.doctor && Number(userId) !== message.doctor.userId;
+            const hasUserId = userId !== null;
+            if (isNotDoctor || hasUserId) {
                 return { success: false, error: 'Unauthorized' };
             }
             await this.chatService.deleteMessage(dto);

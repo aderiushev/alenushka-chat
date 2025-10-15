@@ -40,9 +40,9 @@ export function useDoctors() {
       });
 
       // Update the local state immediately for better UX
-      setDoctors(prevDoctors => 
-        prevDoctors.map(doctor => 
-          doctor.id === doctorId 
+      setDoctors(prevDoctors =>
+        prevDoctors.map(doctor =>
+          doctor.id === doctorId
             ? { ...doctor, user: { ...doctor.user, status: newStatus } }
             : doctor
         )
@@ -66,11 +66,11 @@ export function useDoctors() {
       const response = await api.put(`/auth/doctors/${doctorId}`, updateData);
 
       // Update the local state immediately for better UX
-      setDoctors(prevDoctors => 
-        prevDoctors.map(doctor => 
-          doctor.id === doctorId 
-            ? { 
-                ...doctor, 
+      setDoctors(prevDoctors =>
+        prevDoctors.map(doctor =>
+          doctor.id === doctorId
+            ? {
+                ...doctor,
                 name: updateData.name,
                 description: updateData.description,
                 imageUrl: updateData.imageUrl,
@@ -93,6 +93,25 @@ export function useDoctors() {
   }, []);
 
   /**
+   * Soft delete a doctor by setting their status to 'disabled'
+   * @param doctorId - The ID of the doctor to delete
+   * @returns Promise that resolves when the delete is complete
+   */
+  const deleteDoctor = useCallback(async (doctorId: number) => {
+    try {
+      await api.patch(`/auth/doctors/${doctorId}/delete`);
+
+      // Remove from local state immediately for better UX
+      setDoctors(prevDoctors =>
+        prevDoctors.filter(doctor => doctor.id !== doctorId)
+      );
+    } catch (err) {
+      console.error('Error deleting doctor:', err);
+      throw new Error('Failed to delete doctor');
+    }
+  }, []);
+
+  /**
    * Refresh the doctors list
    */
   const refetch = useCallback(() => {
@@ -110,6 +129,7 @@ export function useDoctors() {
     error,
     toggleDoctorStatus,
     updateDoctor,
+    deleteDoctor,
     refetch
   };
 }
