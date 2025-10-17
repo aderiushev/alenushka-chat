@@ -239,8 +239,11 @@ export default function Room() {
         navigate(`/?roomId=${room.id}&doctorId=${doctorId}`);
       }
 
-      if (room && user && doctorId && Number(doctorId) !== user?.doctor.id && user.role !== 'admin') {
-        navigate(`/?roomId=${room.id}`);
+      if (room && user && doctorId && user.role !== 'admin') {
+        // Only redirect if user has a doctor profile and it doesn't match the doctorId
+        if (user.doctor?.id && Number(doctorId) !== user.doctor.id) {
+          navigate(`/?roomId=${room.id}`);
+        }
       }
     }
   }, [doctorId, user, room, isUserLoaded]);

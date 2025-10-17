@@ -23,7 +23,7 @@ const Header = ()=>  {
       <NavbarBrand className="gap-2 flex-col sm:flex-row">
         {user && (
           <h3>
-            {user.doctor? user.doctor.name : user.email}
+            {user.doctor?.name ?? user.email}
           </h3>
         )}
         <Link href="/">Алёнушка :: Онлайн-консультации</Link>

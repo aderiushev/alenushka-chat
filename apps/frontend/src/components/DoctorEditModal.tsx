@@ -249,7 +249,7 @@ export default function DoctorEditModal({
             </div>
           </ModalBody>
 
-          <ModalFooter className="border-t-2 shadow-md flex justify-between flex">
+          <ModalFooter className="border-t-2 shadow-md flex justify-between w-full">
             <div className="flex flex-1">
               {onDelete && (
                 <Button
