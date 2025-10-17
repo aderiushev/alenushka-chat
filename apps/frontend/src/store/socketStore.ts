@@ -16,6 +16,7 @@ interface SocketState {
   pendingMessages: PendingMessage[];
   isConnected: boolean;
   currentUser: User | null;
+  currentRoomId: string | null;
   connect: (roomId: string) => void;
   sendMessage: (message: Omit<Message, 'id' | 'createdAt'>) => void;
   editMessage: (id: string, updates: Partial<Omit<Message, 'id' | 'createdAt'>>, user?: User | null) => void;
@@ -33,12 +34,21 @@ export const useSocketStore = create<SocketState>()(
       pendingMessages: [],
       isConnected: false,
       currentUser: null,
+      currentRoomId: null,
       connect: (roomId: string) => {
         const existingSocket = get().socket;
+        const currentRoomId = get().currentRoomId;
         const token = localStorage.getItem('token');
 
+        // If already connected to this room, don't reconnect
+        if (existingSocket && existingSocket.connected && currentRoomId === roomId) {
+          console.log(`Already connected to room ${roomId}`);
+          return;
+        }
+
+        // If switching rooms or socket is dead, disconnect old socket
         if (existingSocket) {
-          console.log('Disconnecting existing socket');
+          console.log(`Disconnecting from room ${currentRoomId}, connecting to ${roomId}`);
           existingSocket.off();
           existingSocket.disconnect();
         }
@@ -140,7 +150,7 @@ export const useSocketStore = create<SocketState>()(
           }));
         });
 
-        set({ socket });
+        set({ socket, currentRoomId: roomId });
       },
       sendMessage: (msg) => {
         const socket = get().socket;
@@ -417,6 +427,7 @@ export const useSocketStore = create<SocketState>()(
         pendingMessages: state.pendingMessages,
         isConnected: false,
         currentUser: state.currentUser,
+        currentRoomId: null,
         connect: state.connect,
         sendMessage: state.sendMessage,
         editMessage: state.editMessage,

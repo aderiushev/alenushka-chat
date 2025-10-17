@@ -18,7 +18,7 @@ import { JwtService } from '../auth/jwt.service';
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
-  onlineUsers: Set<string> = new Set();
+  private userSockets: Map<string, Set<string>> = new Map(); // userId/socketId -> Set of socket IDs
 
   constructor(
       private readonly chatService: ChatService,
@@ -43,18 +43,51 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: Socket) {
     const userId = this.getUserIdFromSocket(client);
+    const identifier = userId || client.id; // Use userId for doctors, socket.id for clients
 
-    this.onlineUsers.add(userId || client.id);
-    this.server.emit('user-online', { clientId: client.id, userId });
-    this.server.emit('online-users', Array.from(this.onlineUsers));
+    // Add this socket to the user's socket set
+    if (!this.userSockets.has(identifier)) {
+      this.userSockets.set(identifier, new Set());
+    }
+    const socketSet = this.userSockets.get(identifier)!;
+    const isFirstConnection = socketSet.size === 0;
+    socketSet.add(client.id);
+
+    // Get all currently online user identifiers
+    const onlineUsers = Array.from(this.userSockets.keys());
+
+    // Only emit user-online if this is the user's FIRST connection
+    if (isFirstConnection) {
+      this.server.emit('user-online', { clientId: client.id, userId: identifier });
+    }
+
+    // Always emit updated online users list
+    this.server.emit('online-users', onlineUsers);
+
+    console.log(`User ${identifier} connected (${socketSet.size} active socket(s))`);
   }
 
   handleDisconnect(client: Socket) {
     const userId = this.getUserIdFromSocket(client);
+    const identifier = userId || client.id;
 
-    this.onlineUsers.delete(userId || client.id);
-    this.server.emit('user-offline', { clientId: client.id, userId });
-    this.server.emit('online-users', Array.from(this.onlineUsers));
+    // Remove this socket from the user's socket set
+    if (this.userSockets.has(identifier)) {
+      const socketSet = this.userSockets.get(identifier)!;
+      socketSet.delete(client.id);
+
+      // Only mark user offline if they have NO more active sockets
+      if (socketSet.size === 0) {
+        this.userSockets.delete(identifier);
+        this.server.emit('user-offline', { clientId: client.id, userId: identifier });
+      }
+
+      console.log(`User ${identifier} disconnected (${socketSet.size} remaining socket(s))`);
+    }
+
+    // Always emit updated online users list
+    const onlineUsers = Array.from(this.userSockets.keys());
+    this.server.emit('online-users', onlineUsers);
   }
 
   @SubscribeMessage('typing')

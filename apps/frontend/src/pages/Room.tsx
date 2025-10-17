@@ -198,6 +198,7 @@ export default function Room() {
   const setCurrentUser = useSocketStore((s) => s.setCurrentUser);
   const [onlineUsers, setOnlineUsers] = useState<(string | number)[]>([]);
   const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isTabFocused, setIsTabFocused] = useState(true);
   const originalTitle = useRef(document.title);
   const flickerInterval = useRef<NodeJS.Timeout | null>(null);
@@ -274,6 +275,7 @@ export default function Room() {
     setCurrentUser(user);
   }, [user, setCurrentUser]);
 
+  // Effect 1: Set up event listeners (runs when socket changes)
   useEffect(() => {
     if (!socket) return;
 
@@ -306,9 +308,25 @@ export default function Room() {
     // });
 
     return () => {
-      socket.disconnect();
+      // Only remove listeners, DON'T disconnect
+      socket.off('online-users');
+      socket.off('user-online');
+      socket.off('user-offline');
+      socket.off('new-message');
     };
   }, [socket]);
+
+  // Effect 2: Disconnect ONLY on component unmount (empty deps)
+  useEffect(() => {
+    return () => {
+      // Access socket from store directly to avoid stale closure
+      const currentSocket = useSocketStore.getState().socket;
+      if (currentSocket) {
+        console.log('Room unmounting, disconnecting socket');
+        currentSocket.disconnect();
+      }
+    };
+  }, []); // Empty deps = only runs on mount/unmount
 
   useEffect(() => {
     scrollToBottom();
@@ -515,13 +533,25 @@ export default function Room() {
 
     socket.on('typing', (clientId: string) => {
       if (socket.id === clientId) return;
+
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
       setIsTyping(true);
-      const timeout = setTimeout(() => setIsTyping(false), 3000);
-      return () => clearTimeout(timeout);
+      typingTimeoutRef.current = setTimeout(() => {
+        setIsTyping(false);
+        typingTimeoutRef.current = null;
+      }, 3000);
     });
 
     return () => {
       socket.off('typing');
+      // Clear timeout on cleanup
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
     };
   }, [socket, id]);
 
@@ -573,8 +603,26 @@ export default function Room() {
 
   if (!room) return null
 
-  const isPatientConnected = ((typeof socket?.id === 'string' || typeof socket?.id === 'number') && onlineUsers.includes(socket.id))
-      || (onlineUsers.length > 1 && onlineUsers.includes(room.doctor.userId));
+  // Check if doctor is online (by userId)
+  const isDoctorOnline = onlineUsers.some(id => String(id) === String(room.doctor.userId));
+
+  // Check if client is online (any online user that is NOT the doctor)
+  const isClientOnline = onlineUsers.some(id => {
+    // If the ID matches doctor's userId, it's the doctor
+    if (String(id) === String(room.doctor.userId)) return false;
+    // Otherwise, it's a client (socket.id is a string that doesn't match doctor's userId)
+    return true;
+  });
+
+  // Determine what to show based on current user's role
+  let isPatientConnected: boolean;
+  if (user) {
+    // Current user is doctor or admin - check if client is online
+    isPatientConnected = isClientOnline;
+  } else {
+    // Current user is client - check if doctor is online
+    isPatientConnected = isDoctorOnline;
+  }
 
   const isCanEnd = user && (user.role === 'admin' || user.id === room.doctor.userId);
   const isAdmin = user?.role === 'admin';
@@ -624,7 +672,7 @@ export default function Room() {
                   </span>
                   {!isAdmin && (
                     <span className="flex items-center gap-1">
-                      <span className={`flex w-3 h-3 rounded-full ${onlineUsers.includes(room.doctor.userId) ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <span className={`flex w-3 h-3 rounded-full ${isDoctorOnline ? 'bg-green-500' : 'bg-red-500'}`} />
                       <span>{user ? `Вы` : room.doctor.name}</span>
                     </span>
                   )}
@@ -680,7 +728,7 @@ export default function Room() {
                       </span>
                       {!isAdmin && (
                         <span className="flex items-center gap-1">
-                          <span className={`flex w-3 h-3 rounded-full ${onlineUsers.includes(room.doctor.userId) ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <span className={`flex w-3 h-3 rounded-full ${isDoctorOnline ? 'bg-green-500' : 'bg-red-500'}`} />
                           <span>{user ? `Вы` : room.doctor.name}</span>
                         </span>
                       )}
@@ -732,7 +780,9 @@ export default function Room() {
                   ))}
                   {isTyping && (
                     <div className="min-h-[20px] flex py-2">
-                        <span className="text-sm text-gray-500">Пользователь печатает...</span>
+                        <span className="text-sm text-gray-500">
+                          {user ? `${room.patientName} печатает...` : `${room.doctor.name} печатает...`}
+                        </span>
                     </div>
                   )}
                 </>
