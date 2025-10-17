@@ -44,7 +44,7 @@ export const useSocketStore = create<SocketState>()(
         }
 
         console.log(`Connecting to room: ${roomId}`);
-        const socket = io(process.env.NODE_ENV === 'development' ? 'localhost:4001' : `${window.location.protocol}//${window.location.hostname}`, {
+        const socket = io(process.env.NODE_ENV === 'development' ? 'localhost:3014' : `${window.location.protocol}//${window.location.hostname}`, {
           query: {
             token,
           },

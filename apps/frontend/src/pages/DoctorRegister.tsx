@@ -173,7 +173,7 @@ export default function DoctorRegister() {
       </div>
 
       {/* Fixed Page Title Section */}
-      <div className="register-title-fixed">
+      <div className="register-title-fixed bg-white">
         <div className="container mx-auto px-4 lg:px-8 xl:px-12" style={{ maxWidth: '1600px' }}>
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>

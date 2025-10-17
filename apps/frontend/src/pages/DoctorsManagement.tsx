@@ -100,12 +100,12 @@ export default function DoctorsManagement() {
   return (
     <div className="doctors-layout">
       {/* Fixed Header */}
-      <div className="doctors-header-fixed">
+      <div className="doctors-header-fixed ">
         <Header />
       </div>
 
       {/* Fixed Controls Section */}
-      <div className="doctors-controls-fixed">
+      <div className="doctors-controls-fixed bg-white">
         <div className="container mx-auto px-4">
           <div className="mb-4">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Управление врачами</h1>
@@ -124,7 +124,6 @@ export default function DoctorsManagement() {
                 size="lg"
                 classNames={{
                   input: "text-base",
-                  inputWrapper: "shadow-md border-2 border-gray-300 hover:border-primary focus-within:border-primary"
                 }}
                 startContent={
                   <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
