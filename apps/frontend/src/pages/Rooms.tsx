@@ -8,7 +8,7 @@ import {
   Button,
   Card,
   CardBody,
-  CardFooter, Chip,
+  Chip,
   Popover,
   PopoverContent,
   PopoverTrigger, RangeCalendar, RangeValue, Select, SelectItem,
