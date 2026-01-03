@@ -135,10 +135,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return { success: false, error: 'Message not found' };
       }
 
-      const isNotDoctor = message.doctor && Number(userId) !== message.doctor.userId;
-      const hasUserId = userId !== null;
+      // Check if user is authorized to edit this message
+      // Allow if: message is from a guest AND current user is a guest (userId is null)
+      // Allow if: message is from a doctor AND current user is that same doctor
+      const isGuestMessage = !message.doctorId;
+      const isGuestUser = userId === null;
+      const isDoctorMessage = message.doctor && message.doctorId;
+      const isDoctorOwner = userId !== null && message.doctor && Number(userId) === message.doctor.userId;
 
-      if (isNotDoctor || hasUserId) {
+      const isAuthorized = (isGuestMessage && isGuestUser) || (isDoctorMessage && isDoctorOwner);
+
+      if (!isAuthorized) {
         return { success: false, error: 'Unauthorized' };
       }
 
@@ -165,10 +172,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return { success: false, error: 'Message not found' };
       }
 
-      const isNotDoctor = message.doctor && Number(userId) !== message.doctor.userId;
-      const hasUserId = userId !== null;
+      // Check if user is authorized to delete this message
+      // Allow if: message is from a guest AND current user is a guest (userId is null)
+      // Allow if: message is from a doctor AND current user is that same doctor
+      const isGuestMessage = !message.doctorId;
+      const isGuestUser = userId === null;
+      const isDoctorMessage = message.doctor && message.doctorId;
+      const isDoctorOwner = userId !== null && message.doctor && Number(userId) === message.doctor.userId;
 
-      if (isNotDoctor || hasUserId) {
+      const isAuthorized = (isGuestMessage && isGuestUser) || (isDoctorMessage && isDoctorOwner);
+
+      if (!isAuthorized) {
         return { success: false, error: 'Unauthorized' };
       }
 
