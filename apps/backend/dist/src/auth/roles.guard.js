@@ -25,8 +25,18 @@ let RolesGuard = class RolesGuard {
             return true;
         const request = context.switchToHttp().getRequest();
         const token = (_a = request.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(' ')[1];
-        const user = this.jwtService.verify(token);
-        return requiredRoles.includes(user.role);
+        // No token provided - deny access to protected routes
+        if (!token) {
+            return false;
+        }
+        try {
+            const user = this.jwtService.verify(token);
+            return requiredRoles.includes(user.role);
+        }
+        catch (_b) {
+            // Invalid token - deny access
+            return false;
+        }
     }
 };
 exports.RolesGuard = RolesGuard;

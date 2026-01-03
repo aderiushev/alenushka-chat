@@ -103,6 +103,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.join(roomId);
     const messages = await this.chatService.getMessagesForRoom(roomId);
     client.emit('initial-messages', messages);
+
+    // Send current online users to the newly joined client
+    // This ensures the client receives the list after their event listeners are set up
+    const onlineUsers = Array.from(this.userSockets.keys());
+    client.emit('online-users', onlineUsers);
   }
 
   @SubscribeMessage('send-message')

@@ -17,6 +17,6 @@ async function bootstrap() {
     });
     app.enableCors();
     app.useStaticAssets((0, path_1.join)(__dirname, '..', 'uploads'), { prefix: '/uploads' });
-    await app.listen((_a = process.env.PORT) !== null && _a !== void 0 ? _a : 4001);
+    await app.listen((_a = process.env.PORT) !== null && _a !== void 0 ? _a : 3014);
 }
 bootstrap();

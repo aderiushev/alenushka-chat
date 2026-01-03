@@ -22,7 +22,7 @@ let ChatGateway = class ChatGateway {
     constructor(chatService, jwtService) {
         this.chatService = chatService;
         this.jwtService = jwtService;
-        this.onlineUsers = new Set();
+        this.userSockets = new Map(); // userId/socketId -> Set of socket IDs
     }
     getUserIdFromSocket(client) {
         const token = client.handshake.query.token;
@@ -40,15 +40,41 @@ let ChatGateway = class ChatGateway {
     }
     handleConnection(client) {
         const userId = this.getUserIdFromSocket(client);
-        this.onlineUsers.add(userId || client.id);
-        this.server.emit('user-online', { clientId: client.id, userId });
-        this.server.emit('online-users', Array.from(this.onlineUsers));
+        const identifier = userId || client.id; // Use userId for doctors, socket.id for clients
+        // Add this socket to the user's socket set
+        if (!this.userSockets.has(identifier)) {
+            this.userSockets.set(identifier, new Set());
+        }
+        const socketSet = this.userSockets.get(identifier);
+        const isFirstConnection = socketSet.size === 0;
+        socketSet.add(client.id);
+        // Get all currently online user identifiers
+        const onlineUsers = Array.from(this.userSockets.keys());
+        // Only emit user-online if this is the user's FIRST connection
+        if (isFirstConnection) {
+            this.server.emit('user-online', { clientId: client.id, userId: identifier });
+        }
+        // Always emit updated online users list
+        this.server.emit('online-users', onlineUsers);
+        console.log(`User ${identifier} connected (${socketSet.size} active socket(s))`);
     }
     handleDisconnect(client) {
         const userId = this.getUserIdFromSocket(client);
-        this.onlineUsers.delete(userId || client.id);
-        this.server.emit('user-offline', { clientId: client.id, userId });
-        this.server.emit('online-users', Array.from(this.onlineUsers));
+        const identifier = userId || client.id;
+        // Remove this socket from the user's socket set
+        if (this.userSockets.has(identifier)) {
+            const socketSet = this.userSockets.get(identifier);
+            socketSet.delete(client.id);
+            // Only mark user offline if they have NO more active sockets
+            if (socketSet.size === 0) {
+                this.userSockets.delete(identifier);
+                this.server.emit('user-offline', { clientId: client.id, userId: identifier });
+            }
+            console.log(`User ${identifier} disconnected (${socketSet.size} remaining socket(s))`);
+        }
+        // Always emit updated online users list
+        const onlineUsers = Array.from(this.userSockets.keys());
+        this.server.emit('online-users', onlineUsers);
     }
     handleTyping(roomId, client) {
         client.to(roomId).emit('typing', client.id);
@@ -57,6 +83,10 @@ let ChatGateway = class ChatGateway {
         client.join(roomId);
         const messages = await this.chatService.getMessagesForRoom(roomId);
         client.emit('initial-messages', messages);
+        // Send current online users to the newly joined client
+        // This ensures the client receives the list after their event listeners are set up
+        const onlineUsers = Array.from(this.userSockets.keys());
+        client.emit('online-users', onlineUsers);
     }
     async handleSendMessage(dto, client) {
         try {
@@ -78,9 +108,15 @@ let ChatGateway = class ChatGateway {
             if (!message) {
                 return { success: false, error: 'Message not found' };
             }
-            const isNotDoctor = message.doctor && Number(userId) !== message.doctor.userId;
-            const hasUserId = userId !== null;
-            if (isNotDoctor || hasUserId) {
+            // Check if user is authorized to edit this message
+            // Allow if: message is from a guest AND current user is a guest (userId is null)
+            // Allow if: message is from a doctor AND current user is that same doctor
+            const isGuestMessage = !message.doctorId;
+            const isGuestUser = userId === null;
+            const isDoctorMessage = message.doctor && message.doctorId;
+            const isDoctorOwner = userId !== null && message.doctor && Number(userId) === message.doctor.userId;
+            const isAuthorized = (isGuestMessage && isGuestUser) || (isDoctorMessage && isDoctorOwner);
+            if (!isAuthorized) {
                 return { success: false, error: 'Unauthorized' };
             }
             const editedMessage = await this.chatService.editMessage(dto);
@@ -100,9 +136,15 @@ let ChatGateway = class ChatGateway {
             if (!message) {
                 return { success: false, error: 'Message not found' };
             }
-            const isNotDoctor = message.doctor && Number(userId) !== message.doctor.userId;
-            const hasUserId = userId !== null;
-            if (isNotDoctor || hasUserId) {
+            // Check if user is authorized to delete this message
+            // Allow if: message is from a guest AND current user is a guest (userId is null)
+            // Allow if: message is from a doctor AND current user is that same doctor
+            const isGuestMessage = !message.doctorId;
+            const isGuestUser = userId === null;
+            const isDoctorMessage = message.doctor && message.doctorId;
+            const isDoctorOwner = userId !== null && message.doctor && Number(userId) === message.doctor.userId;
+            const isAuthorized = (isGuestMessage && isGuestUser) || (isDoctorMessage && isDoctorOwner);
+            if (!isAuthorized) {
                 return { success: false, error: 'Unauthorized' };
             }
             await this.chatService.deleteMessage(dto);

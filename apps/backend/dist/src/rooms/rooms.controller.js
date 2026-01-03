@@ -28,7 +28,7 @@ let RoomsController = class RoomsController {
     }
     async findAll(req, query, status, dateRange) {
         const authHeader = req.headers['authorization'];
-        const token = authHeader.split(' ')[1];
+        const token = authHeader === null || authHeader === void 0 ? void 0 : authHeader.split(' ')[1];
         const user = this.jwtService.verify(token);
         if (user.role === 'doctor') {
             return this.roomsService.findAllByUserId(Number(user.sub), query, status, dateRange);

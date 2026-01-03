@@ -20,12 +20,22 @@ import DoctorsManagement from "@/pages/DoctorsManagement";
 const ProtectedRoute = ({ requiredRole }: { requiredRole?: 'admin' | 'doctor' }) => {
   const { user, isLoading } = useUser();
 
+  // Show loading state while checking authentication
+  if (isLoading || isLoading === null) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
-  if (isLoading === false && !user) {
+  // Redirect to home if not authenticated
+  if (!user) {
     return <Navigate to="/" replace />;
   }
 
-  if (user && requiredRole && user.role !== requiredRole) {
+  // Redirect if user doesn't have required role
+  if (requiredRole && user.role !== requiredRole) {
     return <Navigate to="/" replace />;
   }
 

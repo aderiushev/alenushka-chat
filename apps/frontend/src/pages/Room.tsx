@@ -620,8 +620,8 @@ export default function Room() {
     // Current user is doctor or admin - check if client is online
     isPatientConnected = isClientOnline;
   } else {
-    // Current user is client - check if doctor is online
-    isPatientConnected = isDoctorOnline;
+    // Current user is client - check if their own socket is in the online list
+    isPatientConnected = socket ? onlineUsers.some(id => String(id) === socket.id) : false;
   }
 
   const isCanEnd = user && (user.role === 'admin' || user.id === room.doctor.userId);

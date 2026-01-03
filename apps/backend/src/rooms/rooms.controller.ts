@@ -29,7 +29,7 @@ export class RoomsController {
     }
   ) {
     const authHeader = req.headers['authorization'];
-    const token = authHeader.split(' ')[1];
+    const token = authHeader?.split(' ')[1];
     const user = this.jwtService.verify(token);
 
     if (user.role === 'doctor') {
