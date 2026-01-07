@@ -49,13 +49,14 @@ const prisma_service_1 = require("./prisma/prisma.service");
 const rooms_module_1 = require("./rooms/rooms.module");
 const upload_controller_1 = require("./upload/upload.controller");
 const auth_module_1 = require("./auth/auth.module");
+const telegram_module_1 = require("./telegram/telegram.module");
 require("./firebase");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [auth_module_1.AuthModule, rooms_module_1.RoomsModule, config_1.ConfigModule.forRoot({
+        imports: [auth_module_1.AuthModule, rooms_module_1.RoomsModule, telegram_module_1.TelegramModule, config_1.ConfigModule.forRoot({
                 isGlobal: true,
                 envFilePath: path.resolve(__dirname, '..', '..', '.env'),
             })],

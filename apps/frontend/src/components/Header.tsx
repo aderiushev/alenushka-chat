@@ -9,7 +9,7 @@ const Header = ()=>  {
   const onLogout = () => {
     if (user) {
       logout();
-      navigate('/')
+      navigate('/login')
     }
   }
 

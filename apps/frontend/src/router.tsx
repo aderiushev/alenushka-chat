@@ -7,6 +7,7 @@ import AppLayout from './AppLayout';
 import Room from './pages/Room';
 import Rooms from './pages/Rooms';
 import Login from './pages/Login';
+import Landing from './pages/Landing';
 import CreateRoom from './pages/CreateRoom';
 import NotFound from './pages/NotFound';
 import {useUser} from "@/hooks/useUser";
@@ -29,14 +30,14 @@ const ProtectedRoute = ({ requiredRole }: { requiredRole?: 'admin' | 'doctor' })
     );
   }
 
-  // Redirect to home if not authenticated
+  // Redirect to login if not authenticated
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
-  // Redirect if user doesn't have required role
+  // Redirect to login if user doesn't have required role
   if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;
@@ -55,7 +56,8 @@ const AdminRoute = () => <ProtectedRoute requiredRole="admin" />;
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<AppLayout />}>
-      <Route path="/" element={<Login />} />
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
       <Route path="/room/:id" element={<Room />} />
       <Route element={<AuthenticatedRoute />}>
         <Route path="/rooms" element={<Rooms />} />

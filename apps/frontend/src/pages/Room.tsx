@@ -237,13 +237,13 @@ export default function Room() {
   useEffect(() => {
     if (isUserLoaded) {
       if (room && doctorId && !user) {
-        navigate(`/?roomId=${room.id}&doctorId=${doctorId}`);
+        navigate(`/login?roomId=${room.id}&doctorId=${doctorId}`);
       }
 
       if (room && user && doctorId && user.role !== 'admin') {
         // Only redirect if user has a doctor profile and it doesn't match the doctorId
         if (user.doctor?.id && Number(doctorId) !== user.doctor.id) {
-          navigate(`/?roomId=${room.id}`);
+          navigate(`/login?roomId=${room.id}`);
         }
       }
     }

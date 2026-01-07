@@ -7,10 +7,11 @@ import { PrismaService } from './prisma/prisma.service';
 import { RoomsModule } from './rooms/rooms.module';
 import { UploadController } from './upload/upload.controller';
 import { AuthModule } from "./auth/auth.module";
+import { TelegramModule } from './telegram/telegram.module';
 import './firebase';
 
 @Module({
-  imports: [AuthModule, RoomsModule, ConfigModule.forRoot({
+  imports: [AuthModule, RoomsModule, TelegramModule, ConfigModule.forRoot({
     isGlobal: true,
     envFilePath: path.resolve(__dirname, '..', '..', '.env'),
   })],
