@@ -6,3 +6,7 @@ apps/backend/node_modules
 apps/frontend/node_modules
 apps/frontend/dist
 apps/backend/dist
+
+# Environment files
+apps/backend/.env
+apps/frontend/.env

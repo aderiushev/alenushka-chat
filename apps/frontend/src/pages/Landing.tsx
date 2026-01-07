@@ -3,7 +3,7 @@ import { Card, CardBody, Input, Textarea, Button } from "@heroui/react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { api } from "../api";
 
-const RECAPTCHA_SITE_KEY = "6LfrQ0MsAAAAAH_U1yoOh9rm1lJGp1If1p76E7qN";
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
 export default function Landing() {
   const [phone, setPhone] = useState("");

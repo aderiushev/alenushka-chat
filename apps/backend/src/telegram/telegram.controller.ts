@@ -1,12 +1,14 @@
 import { Body, Controller, Post, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { TelegramService } from './telegram.service';
 import axios from 'axios';
 
 @Controller('telegram')
 export class TelegramController {
-  constructor(private readonly telegramService: TelegramService) {}
-
-  private readonly recaptchaSecretKey = '6LfrQ0MsAAAAADIxfR4Dr4bLRVP7MytypxDlqIM5';
+  constructor(
+    private readonly telegramService: TelegramService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('consultation-request')
   async sendConsultationRequest(
@@ -23,7 +25,7 @@ export class TelegramController {
         null,
         {
           params: {
-            secret: this.recaptchaSecretKey,
+            secret: this.configService.get<string>('RECAPTCHA_SECRET_KEY'),
             response: body.recaptchaToken,
           },
         }
