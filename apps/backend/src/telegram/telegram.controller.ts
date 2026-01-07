@@ -6,7 +6,7 @@ import axios from 'axios';
 export class TelegramController {
   constructor(private readonly telegramService: TelegramService) {}
 
-  private readonly recaptchaSecretKey = '6LdKSc8qAAAAAFMJnXvgMxYvlxOBvhkOqbE5XHZU';
+  private readonly recaptchaSecretKey = '6LfrQ0MsAAAAADIxfR4Dr4bLRVP7MytypxDlqIM5';
 
   @Post('consultation-request')
   async sendConsultationRequest(
