@@ -35,10 +35,10 @@ export class UploadController {
       const filename = `${uuidv4()}.webp`;
       const processed = await Sharp(file.buffer)
         .resize(1024, 1024, {
-          fit: 'cover',
+          fit: 'inside',
           withoutEnlargement: true
         })
-        .webp({ quality: 50 })
+        .webp({ quality: 80 })
         .toBuffer();
 
       const fileRef = bucket.file(filename);
