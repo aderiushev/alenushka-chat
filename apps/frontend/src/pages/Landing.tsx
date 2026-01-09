@@ -93,6 +93,32 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* When Chat is Enough Section */}
+      <section className="py-12 md:py-16 px-4 bg-white">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-8">
+            Когда чат с педиатром — это достаточно
+          </h2>
+          <ul className="space-y-4 mb-8">
+            <li className="flex items-start gap-3">
+              <span className="text-xl" style={{ color: '#52CABE' }}>✓</span>
+              <span className="text-lg text-gray-700">нужно расшифровать анализы</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-xl" style={{ color: '#52CABE' }}>✓</span>
+              <span className="text-lg text-gray-700">остались вопросы после приёма</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-xl" style={{ color: '#52CABE' }}>✓</span>
+              <span className="text-lg text-gray-700">есть сомнения, продолжать ли лечение</span>
+            </li>
+          </ul>
+          <p className="text-center text-gray-600 text-lg">
+            👉 Если ситуация требует осмотра — врач честно скажет об этом.
+          </p>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section className="py-16 md:py-24 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
@@ -237,9 +263,16 @@ export default function Landing() {
           <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-4">
             Запросить консультацию
           </h2>
-          <p className="text-center text-gray-500 mb-12 max-w-xl mx-auto">
+          <p className="text-center text-gray-500 mb-6 max-w-xl mx-auto">
             Свяжитесь с нами удобным способом, и мы организуем консультацию с педиатром
           </p>
+
+          <div className="text-center mb-10">
+            <p className="text-2xl md:text-3xl font-bold" style={{ color: '#F97784' }}>
+              💬 Онлайн-консультация в чате — от 1 500 ₽
+            </p>
+            <p className="text-gray-500 mt-2">Без визита в клинику</p>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Phone Option */}
