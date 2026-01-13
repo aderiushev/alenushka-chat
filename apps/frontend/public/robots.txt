@@ -1,2 +1,12 @@
+# Robots.txt for Алёнушка онлайн-консультации
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /chat/
+Disallow: /admin/
+Disallow: /login
+
+# Sitemap
+Sitemap: https://chat.alenushka-pediatr.ru/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1
