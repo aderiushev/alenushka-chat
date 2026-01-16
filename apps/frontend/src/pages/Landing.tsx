@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Card, CardBody, Input, Textarea, Button } from "@heroui/react";
+import { useState, useRef, useEffect } from "react";
+import { Card, CardBody, Input, Textarea, Button, Checkbox } from "@heroui/react";
 import { Helmet } from "react-helmet-async";
 import ReCAPTCHA from "react-google-recaptcha";
 import { api } from "../api";
@@ -13,7 +13,41 @@ export default function Landing() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [agreedToPersonalData, setAgreedToPersonalData] = useState(false);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
+
+  // Yandex.Metrika initialization
+  useEffect(() => {
+    // Check if already initialized
+    if ((window as any).ym) return;
+
+    (function(m: any, e: Document, t: string, r: string, i: string, k?: HTMLScriptElement, a?: HTMLScriptElement) {
+      m[i] = m[i] || function() { (m[i].a = m[i].a || []).push(arguments); };
+      m[i].l = 1 * (new Date() as any);
+      for (let j = 0; j < e.scripts.length; j++) {
+        if (e.scripts[j].src === r) return;
+      }
+      k = e.createElement(t) as HTMLScriptElement;
+      a = e.getElementsByTagName(t)[0] as HTMLScriptElement;
+      k.async = true;
+      k.src = r;
+      a.parentNode?.insertBefore(k, a);
+    })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js', 'ym');
+
+    (window as any).ym(23834050, 'init', {
+      clickmap: true,
+      trackLinks: true,
+      accurateTrackBounce: true,
+      webvisor: true
+    });
+  }, []);
+
+  // Yandex.Metrika goal tracking helper
+  const trackGoal = (goal: string) => {
+    if ((window as any).ym) {
+      (window as any).ym(23834050, 'reachGoal', goal);
+    }
+  };
 
   const handleRecaptchaChange = (token: string | null) => {
     setRecaptchaToken(token);
@@ -33,6 +67,11 @@ export default function Landing() {
       return;
     }
 
+    if (!agreedToPersonalData) {
+      setError("Необходимо согласие на обработку персональных данных");
+      return;
+    }
+
     setIsSubmitting(true);
     setError("");
 
@@ -42,10 +81,12 @@ export default function Landing() {
         contactMethod: contactMethod || undefined,
         recaptchaToken,
       });
+      trackGoal('chat_landing__contact_form_submit');
       setIsSubmitted(true);
       setPhone("");
       setContactMethod("");
       setRecaptchaToken(null);
+      setAgreedToPersonalData(false);
       recaptchaRef.current?.reset();
     } catch (err: any) {
       const message = err?.response?.data?.message || "Ошибка отправки. Попробуйте позвонить нам.";
@@ -317,6 +358,7 @@ export default function Landing() {
                     className="text-2xl md:text-3xl font-bold hover:opacity-80 transition-opacity"
                     style={{ color: '#F97784' }}
                     aria-label="Позвонить по телефону +7 342 206 75 60"
+                    onClick={() => trackGoal('chat_landing__phone_click')}
                   >
                     +7 (342) 206-75-60
                   </a>
@@ -385,6 +427,25 @@ export default function Landing() {
                           onErrored={() => setRecaptchaToken(null)}
                         />
                       </div>
+                      <Checkbox
+                        isSelected={agreedToPersonalData}
+                        onValueChange={setAgreedToPersonalData}
+                        size="sm"
+                        classNames={{
+                          label: "text-sm text-gray-600"
+                        }}
+                      >
+                        Согласен на{" "}
+                        <a
+                          href="https://alenushka-pediatr.ru/personal-data-agreement"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:no-underline"
+                          style={{ color: '#52CABE' }}
+                        >
+                          обработку персональных данных
+                        </a>
+                      </Checkbox>
                       {error && (
                         <p className="text-red-500 text-sm text-center" role="alert">{error}</p>
                       )}
@@ -395,7 +456,7 @@ export default function Landing() {
                         size="lg"
                         onPress={handleSubmit}
                         isLoading={isSubmitting}
-                        isDisabled={isSubmitting || !recaptchaToken}
+                        isDisabled={isSubmitting || !recaptchaToken || !agreedToPersonalData}
                       >
                         Отправить заявку на консультацию
                       </Button>
@@ -434,7 +495,11 @@ export default function Landing() {
               Онлайн-консультации с педиатрами в Перми
             </p>
             <address className="not-italic text-white/70 mt-4">
-              <a href="tel:+73422067560" className="hover:text-white transition-colors">
+              <a
+                href="tel:+73422067560"
+                className="hover:text-white transition-colors"
+                onClick={() => trackGoal('chat_landing__phone_click')}
+              >
                 +7 (342) 206-75-60
               </a>
             </address>
@@ -451,8 +516,32 @@ export default function Landing() {
             <p className="text-white/60 text-sm mt-4">
               © 2024-2026 Клиника Алёнушка. Все права защищены.
             </p>
+            {/* Yandex.Metrika informer */}
+            <div className="mt-4">
+              <a
+                href="https://metrika.yandex.ru/stat/?id=23834050&from=informer"
+                target="_blank"
+                rel="nofollow noopener noreferrer"
+              >
+                <img
+                  src="https://informer.yandex.ru/informer/23834050/3_1_FFFFFFFF_EFEFEFFF_0_pageviews"
+                  style={{ width: 88, height: 31, border: 0 }}
+                  alt="Яндекс.Метрика"
+                  title="Яндекс.Метрика: данные за сегодня (просмотры, визиты и уникальные посетители)"
+                  className="ym-advanced-informer"
+                  data-cid="23834050"
+                  data-lang="ru"
+                />
+              </a>
+            </div>
           </div>
         </footer>
+        {/* Yandex.Metrika noscript fallback */}
+        <noscript>
+          <div>
+            <img src="https://mc.yandex.ru/watch/23834050" style={{ position: 'absolute', left: -9999 }} alt="" />
+          </div>
+        </noscript>
       </main>
     </>
   );
