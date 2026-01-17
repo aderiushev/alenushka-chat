@@ -32,20 +32,22 @@ export default function Landing() {
       k.async = true;
       k.src = r;
       a.parentNode?.insertBefore(k, a);
-    })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js', 'ym');
+    })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js?id=106305244', 'ym');
 
-    (window as any).ym(23834050, 'init', {
+    (window as any).ym(106305244, 'init', {
+      ssr: true,
+      webvisor: true,
       clickmap: true,
-      trackLinks: true,
+      ecommerce: "dataLayer",
       accurateTrackBounce: true,
-      webvisor: true
+      trackLinks: true
     });
   }, []);
 
   // Yandex.Metrika goal tracking helper
   const trackGoal = (goal: string) => {
     if ((window as any).ym) {
-      (window as any).ym(23834050, 'reachGoal', goal);
+      (window as any).ym(106305244, 'reachGoal', goal);
     }
   };
 
@@ -519,17 +521,17 @@ export default function Landing() {
             {/* Yandex.Metrika informer */}
             <div className="mt-4">
               <a
-                href="https://metrika.yandex.ru/stat/?id=23834050&from=informer"
+                href="https://metrika.yandex.ru/stat/?id=106305244&from=informer"
                 target="_blank"
                 rel="nofollow noopener noreferrer"
               >
                 <img
-                  src="https://informer.yandex.ru/informer/23834050/3_1_FFFFFFFF_EFEFEFFF_0_pageviews"
+                  src="https://informer.yandex.ru/informer/106305244/3_1_FFFFFFFF_EFEFEFFF_0_pageviews"
                   style={{ width: 88, height: 31, border: 0 }}
                   alt="Яндекс.Метрика"
                   title="Яндекс.Метрика: данные за сегодня (просмотры, визиты и уникальные посетители)"
                   className="ym-advanced-informer"
-                  data-cid="23834050"
+                  data-cid="106305244"
                   data-lang="ru"
                 />
               </a>
@@ -539,7 +541,7 @@ export default function Landing() {
         {/* Yandex.Metrika noscript fallback */}
         <noscript>
           <div>
-            <img src="https://mc.yandex.ru/watch/23834050" style={{ position: 'absolute', left: -9999 }} alt="" />
+            <img src="https://mc.yandex.ru/watch/106305244" style={{ position: 'absolute', left: -9999 }} alt="" />
           </div>
         </noscript>
       </main>
