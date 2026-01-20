@@ -518,8 +518,8 @@ export default function Landing() {
             <p className="text-white/60 text-sm mt-4">
               © 2024-2026 Клиника Алёнушка. Все права защищены.
             </p>
-            {/* Yandex.Metrika informer */}
-            <div className="mt-4">
+            {/* Yandex.Metrika informer - hidden */}
+            <div className="hidden">
               <a
                 href="https://metrika.yandex.ru/stat/?id=106305244&from=informer"
                 target="_blank"

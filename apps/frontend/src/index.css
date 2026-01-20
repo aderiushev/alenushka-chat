@@ -54,6 +54,13 @@ body {
     height: 100vh;
     height: 100dvh; /* Dynamic viewport height for better mobile support */
   }
+
+  /* Android keyboard handling is done via JavaScript */
+  .chat-layout.is-android.mobile-keyboard-visible .chat-footer-dynamic {
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  }
 }
 
 /* Mobile-first chat layout with scrollable header on mobile */
@@ -126,6 +133,7 @@ body {
     align-items: flex-end;
     padding: 0.5rem;
   }
+
 }
 
 input::file-selector-button {
