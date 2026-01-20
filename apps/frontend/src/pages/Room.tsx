@@ -213,9 +213,6 @@ export default function Room() {
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const footerRef = useRef<HTMLDivElement>(null);
-  const chatLayoutRef = useRef<HTMLDivElement>(null);
-  const messagesAreaRef = useRef<HTMLDivElement>(null);
 
   const mediaRecorderRef = useRef<RecordRTC | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -232,11 +229,7 @@ export default function Room() {
     3: false
   })
   const [isAgreed, setIsAgreed] = useState<boolean>(!!localStorage.getItem('isAgreed'));
-  const [isMobileKeyboardVisible, setIsMobileKeyboardVisible] = useState(false);
   const isReady = !!user || isAgreed;
-
-  // Detect Android browser
-  const isAndroid = /android/i.test(navigator.userAgent);
 
   useNavigationBlock(textareaRef);
 
@@ -351,117 +344,26 @@ export default function Room() {
     }
   }, [text.length > 0 ? Math.ceil(text.length / 50) : 0, isReady, messages.length]); // Less frequent updates
 
-  // Mobile virtual keyboard handling with Visual Viewport API
+  // Mobile virtual keyboard handling - scroll to bottom when keyboard appears
   useEffect(() => {
-    let keyboardTimeout: NodeJS.Timeout;
-    let rafId: number;
+    if (!window.visualViewport) return;
 
-    const handleVisualViewportChange = () => {
-      if (!window.visualViewport) return;
+    let prevHeight = window.visualViewport.height;
 
-      // Cancel any pending RAF
-      if (rafId) cancelAnimationFrame(rafId);
-
-      rafId = requestAnimationFrame(() => {
-        const viewport = window.visualViewport!;
-        const windowHeight = window.innerHeight;
-        const viewportHeight = viewport.height;
-        const offsetTop = viewport.offsetTop;
-
-        // Calculate keyboard height (difference between window and viewport)
-        const calculatedKeyboardHeight = windowHeight - viewportHeight - offsetTop;
-        const isKeyboardNowVisible = calculatedKeyboardHeight > 100; // threshold to avoid false positives
-
-        // Android-specific: Directly manipulate DOM for keyboard handling
-        if (isAndroid && footerRef.current && chatLayoutRef.current) {
-          const footerHeight = footerRef.current.offsetHeight || 120;
-
-          if (isKeyboardNowVisible) {
-            // Position footer at the bottom of the visible viewport
-            footerRef.current.style.position = 'fixed';
-            footerRef.current.style.left = '0';
-            footerRef.current.style.right = '0';
-            footerRef.current.style.bottom = 'auto';
-            footerRef.current.style.top = `${offsetTop + viewportHeight - footerHeight}px`;
-            footerRef.current.style.zIndex = '9999';
-
-            // Adjust layout height to account for keyboard
-            chatLayoutRef.current.style.height = `${viewportHeight}px`;
-            chatLayoutRef.current.style.transform = `translateY(${offsetTop}px)`;
-
-            // Add padding to messages area to prevent content being hidden behind footer
-            if (messagesAreaRef.current) {
-              messagesAreaRef.current.style.paddingBottom = `${footerHeight + 20}px`;
-            }
-          } else {
-            // Reset styles when keyboard is hidden
-            footerRef.current.style.position = '';
-            footerRef.current.style.left = '';
-            footerRef.current.style.right = '';
-            footerRef.current.style.bottom = '';
-            footerRef.current.style.top = '';
-            footerRef.current.style.zIndex = '';
-
-            chatLayoutRef.current.style.height = '';
-            chatLayoutRef.current.style.transform = '';
-
-            if (messagesAreaRef.current) {
-              messagesAreaRef.current.style.paddingBottom = '';
-            }
-          }
-        }
-
-        if (isKeyboardNowVisible !== isMobileKeyboardVisible) {
-          setIsMobileKeyboardVisible(isKeyboardNowVisible);
-
-          // Clear previous timeout
-          clearTimeout(keyboardTimeout);
-
-          // Only scroll when keyboard appears and there are messages
-          if (isKeyboardNowVisible && messages.length > 0 && isReady) {
-            keyboardTimeout = setTimeout(() => {
-              scrollToBottom();
-            }, 300); // Faster scroll for better UX
-          }
-        }
-      });
+    const handleResize = () => {
+      const currentHeight = window.visualViewport!.height;
+      // Keyboard appeared (viewport shrunk significantly)
+      if (currentHeight < prevHeight - 100 && messages.length > 0 && isReady) {
+        setTimeout(() => scrollToBottom(), 300);
+      }
+      prevHeight = currentHeight;
     };
 
-    // Use Visual Viewport API for better mobile keyboard detection
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleVisualViewportChange);
-      window.visualViewport.addEventListener('scroll', handleVisualViewportChange);
-      // Initial call to set values
-      handleVisualViewportChange();
-    }
-
+    window.visualViewport.addEventListener('resize', handleResize);
     return () => {
-      clearTimeout(keyboardTimeout);
-      if (rafId) cancelAnimationFrame(rafId);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleVisualViewportChange);
-        window.visualViewport.removeEventListener('scroll', handleVisualViewportChange);
-      }
-      // Reset styles on cleanup
-      if (isAndroid) {
-        if (footerRef.current) {
-          footerRef.current.style.position = '';
-          footerRef.current.style.left = '';
-          footerRef.current.style.right = '';
-          footerRef.current.style.bottom = '';
-          footerRef.current.style.top = '';
-          footerRef.current.style.zIndex = '';
-        }
-        if (chatLayoutRef.current) {
-          chatLayoutRef.current.style.height = '';
-          chatLayoutRef.current.style.transform = '';
-        }
-        if (messagesAreaRef.current) {
-          messagesAreaRef.current.style.paddingBottom = '';
-        }
-      }
+      window.visualViewport?.removeEventListener('resize', handleResize);
     };
-  }, [messages.length, isReady, isMobileKeyboardVisible, isAndroid]);
+  }, [messages.length, isReady]);
 
   // useEffect(() => {
   //   if (textareaRef.current) {
@@ -709,10 +611,7 @@ export default function Room() {
   const isAgree = Object.values(agree).every((item) => item)
 
   return (
-    <div
-      ref={chatLayoutRef}
-      className={`fixed inset-0 w-full h-full overflow-hidden chat-layout ${isMobileKeyboardVisible ? 'mobile-keyboard-visible' : ''} ${isAndroid ? 'is-android' : ''}`}
-    >
+    <div className="fixed inset-0 w-full h-full overflow-hidden chat-layout">
       {isRecording && (
         <Notification>
           <p>Происходит запись голосового сообщения...</p>
@@ -787,7 +686,7 @@ export default function Room() {
         </div>
 
       {/* Scrollable Content Area - includes header on mobile */}
-      <div ref={messagesAreaRef} className="chat-messages-area bg-gray-100">
+      <div className="chat-messages-area bg-gray-100">
         {isReady ? (
           <div className="flex flex-col min-h-full">
             {/* Mobile Header - Scrollable */}
@@ -959,7 +858,7 @@ export default function Room() {
 
       {/* Dynamic Footer */}
       {isReady && (
-        <div ref={footerRef} className="chat-footer-dynamic border-t bg-white z-40">
+        <div className="chat-footer-dynamic border-t bg-white z-40">
           {room && room.status === 'active' ? (
             <div className="flex flex-row items-end gap-2 min-h-[80px]">
               {!isAdmin && (

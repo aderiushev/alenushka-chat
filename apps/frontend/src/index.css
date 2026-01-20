@@ -48,18 +48,10 @@ body {
     font-size: 16px !important;
   }
 
-  /* Improve virtual keyboard behavior */
+  /* Improve virtual keyboard behavior - uses interactive-widget=resizes-content meta tag */
   .chat-layout {
-    /* Use viewport units that account for virtual keyboard */
     height: 100vh;
-    height: 100dvh; /* Dynamic viewport height for better mobile support */
-  }
-
-  /* Android keyboard handling is done via JavaScript */
-  .chat-layout.is-android.mobile-keyboard-visible .chat-footer-dynamic {
-    background: white;
-    border-top: 1px solid #e5e7eb;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    height: 100dvh;
   }
 }
 
