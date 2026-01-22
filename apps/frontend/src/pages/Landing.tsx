@@ -130,9 +130,34 @@ export default function Landing() {
               Профессиональная медицинская помощь для вашего ребёнка — быстро, удобно и безопасно. Консультация от 1500₽.
             </p>
 
+            {/* Hero CTAs */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+              <a
+                href="tel:+73422067560"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-white rounded-full text-lg font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+                style={{ color: '#52CABE' }}
+                aria-label="Позвонить по телефону +7 342 206 75 60"
+                onClick={() => trackGoal('chat_landing__phone_click')}
+              >
+                <span aria-hidden="true">📞</span>
+                +7 (342) 206-75-60
+              </a>
+              <button
+                onClick={() => {
+                  document.getElementById('request-consultation')?.scrollIntoView({ behavior: 'smooth' });
+                  trackGoal('chat_landing__hero_cta_click');
+                }}
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-lg font-semibold text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+                style={{ backgroundColor: '#F97784' }}
+              >
+                <span aria-hidden="true">💬</span>
+                Записаться на консультацию
+              </button>
+            </div>
+
             {/* Scroll indicator */}
-            <div className="mt-12 animate-bounce" aria-hidden="true">
-              <span className="text-white/70 text-3xl">↓</span>
+            <div className="mt-4 animate-bounce" aria-hidden="true">
+              <span className="text-white/50 text-2xl">↓</span>
             </div>
           </header>
 

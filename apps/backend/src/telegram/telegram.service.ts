@@ -6,7 +6,7 @@ export class TelegramService {
   private readonly logger = new Logger(TelegramService.name);
 
   private readonly botToken = '6492863867:AAEMYr4ksmLUwAUm8ZhTduSKTGVk5z8aYg8';
-  private readonly chatId = -958702148;
+  private readonly chatId = -1003631903891;
 
   /**
    * Send consultation request notification to Telegram
