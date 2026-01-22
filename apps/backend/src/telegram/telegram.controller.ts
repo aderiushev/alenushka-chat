@@ -34,6 +34,12 @@ export class TelegramController {
       if (!recaptchaResponse.data.success) {
         throw new BadRequestException('Проверка reCAPTCHA не пройдена');
       }
+
+      // For reCAPTCHA v3, check the score (0.0 - 1.0, higher is more likely human)
+      const score = recaptchaResponse.data.score;
+      if (score !== undefined && score < 0.5) {
+        throw new BadRequestException('Проверка reCAPTCHA не пройдена. Попробуйте ещё раз.');
+      }
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;

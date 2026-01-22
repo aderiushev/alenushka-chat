@@ -1,20 +1,19 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardBody, Input, Textarea, Button, Checkbox } from "@heroui/react";
 import { Helmet } from "react-helmet-async";
-import ReCAPTCHA from "react-google-recaptcha";
+import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { api } from "../api";
 
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
-export default function Landing() {
+function LandingContent() {
   const [phone, setPhone] = useState("");
   const [contactMethod, setContactMethod] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState("");
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [agreedToPersonalData, setAgreedToPersonalData] = useState(false);
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   // Yandex.Metrika initialization
   useEffect(() => {
@@ -51,21 +50,9 @@ export default function Landing() {
     }
   };
 
-  const handleRecaptchaChange = (token: string | null) => {
-    setRecaptchaToken(token);
-    if (token) {
-      setError("");
-    }
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!phone && !contactMethod) {
       setError("Укажите телефон или способ связи");
-      return;
-    }
-
-    if (!recaptchaToken) {
-      setError("Пожалуйста, подтвердите, что вы не робот");
       return;
     }
 
@@ -74,10 +61,17 @@ export default function Landing() {
       return;
     }
 
+    if (!executeRecaptcha) {
+      setError("reCAPTCHA не загружена. Обновите страницу.");
+      return;
+    }
+
     setIsSubmitting(true);
     setError("");
 
     try {
+      const recaptchaToken = await executeRecaptcha('consultation_request');
+
       await api.post("/telegram/consultation-request", {
         phone: phone || undefined,
         contactMethod: contactMethod || undefined,
@@ -87,18 +81,14 @@ export default function Landing() {
       setIsSubmitted(true);
       setPhone("");
       setContactMethod("");
-      setRecaptchaToken(null);
       setAgreedToPersonalData(false);
-      recaptchaRef.current?.reset();
     } catch (err: any) {
       const message = err?.response?.data?.message || "Ошибка отправки. Попробуйте позвонить нам.";
       setError(message);
-      recaptchaRef.current?.reset();
-      setRecaptchaToken(null);
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [phone, contactMethod, agreedToPersonalData, executeRecaptcha]);
 
   return (
     <>
@@ -445,15 +435,6 @@ export default function Landing() {
                           inputWrapper: "border-2 hover:border-[#52CABE] focus-within:border-[#52CABE]"
                         }}
                       />
-                      <div className="flex justify-center">
-                        <ReCAPTCHA
-                          ref={recaptchaRef}
-                          sitekey={RECAPTCHA_SITE_KEY}
-                          onChange={handleRecaptchaChange}
-                          onExpired={() => setRecaptchaToken(null)}
-                          onErrored={() => setRecaptchaToken(null)}
-                        />
-                      </div>
                       <Checkbox
                         isSelected={agreedToPersonalData}
                         onValueChange={setAgreedToPersonalData}
@@ -483,10 +464,19 @@ export default function Landing() {
                         size="lg"
                         onPress={handleSubmit}
                         isLoading={isSubmitting}
-                        isDisabled={isSubmitting || !recaptchaToken || !agreedToPersonalData}
+                        isDisabled={isSubmitting || !agreedToPersonalData}
                       >
                         Отправить заявку на консультацию
                       </Button>
+                      <p className="text-xs text-gray-400 text-center mt-2">
+                        Защищено reCAPTCHA.{" "}
+                        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
+                          Политика конфиденциальности
+                        </a>{" "}и{" "}
+                        <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
+                          Условия использования
+                        </a>{" "}Google.
+                      </p>
                     </form>
                   )}
                 </CardBody>
@@ -571,6 +561,23 @@ export default function Landing() {
         </noscript>
       </main>
     </>
+  );
+}
+
+// Wrapper component with reCAPTCHA provider
+export default function Landing() {
+  return (
+    <GoogleReCaptchaProvider
+      reCaptchaKey={RECAPTCHA_SITE_KEY}
+      scriptProps={{
+        async: true,
+        defer: true,
+      }}
+    >
+      {/* Hide reCAPTCHA badge - attribution is shown in the form */}
+      <style>{`.grecaptcha-badge { visibility: hidden; }`}</style>
+      <LandingContent />
+    </GoogleReCaptchaProvider>
   );
 }
 
