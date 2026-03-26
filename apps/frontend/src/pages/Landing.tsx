@@ -564,7 +564,7 @@ function LandingContent() {
   );
 }
 
-// Wrapper component with reCAPTCHA provider
+// Wrapper component with reCAPTCHA v3 provider
 export default function Landing() {
   return (
     <GoogleReCaptchaProvider
