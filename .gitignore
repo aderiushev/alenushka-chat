@@ -10,3 +10,8 @@ firebase-debug.log
 # Environment files
 apps/backend/.env
 apps/frontend/.env
+
+# Secrets and keys — never commit
+*.p8
+*.pem
+apps/backend/secrets/
