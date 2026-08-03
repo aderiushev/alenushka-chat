@@ -1,12 +1,33 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 
+/**
+ * Telegram bot credentials, read from the environment
+ */
+interface TelegramConfig {
+  botToken: string;
+  chatId: string;
+}
+
 @Injectable()
 export class TelegramService {
   private readonly logger = new Logger(TelegramService.name);
 
-  private readonly botToken = '6492863867:AAEMYr4ksmLUwAUm8ZhTduSKTGVk5z8aYg8';
-  private readonly chatId = -1003631903891;
+  /**
+   * Get bot credentials from environment variables
+   */
+  private getConfig(): TelegramConfig {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+
+    if (!botToken || !chatId) {
+      throw new Error(
+        'Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID environment variables'
+      );
+    }
+
+    return { botToken, chatId };
+  }
 
   /**
    * Send consultation request notification to Telegram
@@ -19,11 +40,11 @@ export class TelegramService {
   ): Promise<void> {
     try {
       const messageParts = ['📋 Заявка на онлайн-консультацию:', ''];
-      
+
       if (phone) {
         messageParts.push(`☎️ Телефон: ${phone}`);
       }
-      
+
       if (contactMethod) {
         messageParts.push(`💬 Способ связи: ${contactMethod}`);
       }
@@ -47,11 +68,12 @@ export class TelegramService {
    * @param text - Message text
    */
   private async sendMessage(text: string): Promise<void> {
-    const url = `https://api.telegram.org/bot${this.botToken}/sendMessage`;
+    const { botToken, chatId } = this.getConfig();
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
     await axios.post(url, {
       text,
-      chat_id: this.chatId
+      chat_id: chatId
     });
   }
 }
