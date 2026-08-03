@@ -2,11 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 
 /**
- * Telegram bot credentials, read from the environment
+ * Relay configuration
+ *
+ * Notifications go through a Supabase Edge Function rather than straight to
+ * api.telegram.org, which is filtered from the datacenter this runs in. The bot
+ * token and chat id live in the function's secrets, not here.
  */
-interface TelegramConfig {
-  botToken: string;
-  chatId: string;
+interface RelayConfig {
+  url: string;
+  secret: string;
 }
 
 @Injectable()
@@ -14,19 +18,19 @@ export class TelegramService {
   private readonly logger = new Logger(TelegramService.name);
 
   /**
-   * Get bot credentials from environment variables
+   * Get relay configuration from environment variables
    */
-  private getConfig(): TelegramConfig {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
+  private getRelayConfig(): RelayConfig {
+    const url = process.env.TELEGRAM_RELAY_URL;
+    const secret = process.env.TELEGRAM_RELAY_SECRET;
 
-    if (!botToken || !chatId) {
+    if (!url || !secret) {
       throw new Error(
-        'Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID environment variables'
+        'Missing TELEGRAM_RELAY_URL or TELEGRAM_RELAY_SECRET environment variables'
       );
     }
 
-    return { botToken, chatId };
+    return { url, secret };
   }
 
   /**
@@ -64,17 +68,21 @@ export class TelegramService {
   }
 
   /**
-   * Send message to Telegram bot
+   * Send message to Telegram through the relay
    * @param text - Message text
    */
   private async sendMessage(text: string): Promise<void> {
-    const { botToken, chatId } = this.getConfig();
-    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const { url, secret } = this.getRelayConfig();
 
-    await axios.post(url, {
-      text,
-      chat_id: chatId
-    });
+    await axios.post(
+      url,
+      {
+        bot: 'requests',
+        method: 'sendMessage',
+        payload: { text }
+      },
+      { headers: { 'X-Relay-Secret': secret } }
+    );
   }
 }
 
